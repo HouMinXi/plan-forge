@@ -280,6 +280,93 @@ correct first question is:
 
 Empirical evidence comes first. Theory follows.
 
+## 11. Acknowledged Fundamental Limitation + Defense in Depth
+
+plan-forge cannot fully solve the AI-detect-AI circularity. LLM-dependent
+gates (G6 Part B, G8 Part B, G9 Part B, G10 Part B) inherit AI training
+bias. Multi-provider vote reduces individual model bias but does not
+eliminate collective AI training bias.
+
+Defense in depth (6 independent layers):
+
+**Layer 1 -- Mechanical checks** (6 of 10 G-checks + F1-F7 + PBR):
+  pure-Python, independent of any LLM. Structural falsifiability without
+  AI inference. G1/G2/G3/G5/G7 mechanical parts + G6/G8/G9 mechanical
+  parts + G10 mechanical part.
+
+**Layer 2 -- Narrow LLM role**:
+  G4/G6/G8/G9 Part B and G10 Part B restricted to narrow technical
+  questions (per-SC measurability, per-citation resolvability, per-
+  anchor feasibility, per-evidence tier), NOT grand "is this plan or
+  vision" judgments. Grand judgments are made by Layer 1 mechanical
+  checks (a plan without reference class / pre-mortem / 3-class risks /
+  scope-challenge is by construction a vision, no LLM needed).
+
+**Layer 3 -- Multi-provider vote**:
+  4 LLM providers (Anthropic, Kimi, DeepSeek, Mimo); majority required;
+  ties produce "indeterminate" (not silent default). Web search via
+  tool_use enabled per provider capability.
+
+**Layer 4 -- Human arbitration**:
+  when LLM evidence is sufficient (per-provider cited instances) and
+  verdict is split, decision elevates to human. LLM is evidence-
+  gatherer, human is final arbiter. Mode configurable:
+  `on_split_evidence_rich` (default), `on_split`, `always`, `off`.
+
+**Layer 5 -- Independent ground truth corpus**:
+  SC-3 retroactive audit validates against forge-code Phase 2
+  LEARNINGS.md (documented pre-plan-forge by 50+ rounds of failure).
+  corpus_db accumulates more independent ground truth over time.
+  Outcomes table tracks predicted vs actual failure modes; plan-forge's
+  own quality is measured by its prediction accuracy, not by its
+  internal consistency.
+
+**Layer 6 -- Empirical track record** (practice is the only test):
+  each plan-forge run is recorded to corpus_db. Post-hoc, predicted
+  failure modes are tracked against actual outcomes. If 6 months pass
+  with no outcomes recorded, plan-forge has not been tested by practice
+  and is abandoned per Section 6 (empirical grounding commitment).
+  Self-falsifying clause: SC-19.
+
+What plan-forge does NOT claim: it does not perfectly distinguish AI
+plans from human plans. It detects plans that lack mechanical evidence
+of falsifiability discipline, regardless of authorship. Some AI plans
+pass; some human plans fail. plan-forge optimizes for plan QUALITY
+using authorship-independent signals, then is empirically validated
+by track record. Practice tests truth.
+
+## 12. Recursive Epistemic Discipline
+
+plan-forge applies its own epistemic standards to its own evidence.
+
+When plan-forge's LLM gates (G4, G6, G8, G9) cite web evidence via
+search, that evidence itself must meet G10 provenance tier criteria.
+Without this recursion, plan-forge has a leak: structured plan ->
+unstructured evidence -> contaminated conclusion.
+
+The SCI replication crisis (Open Science Collaboration 2015; Ioannidis
+2005) demonstrates that publication != truth. A paper is trustworthy
+only after independent replication. plan-forge's LLM-fetched evidence
+must clear the same bar.
+
+Tiering applied:
+- T1 GOLD: primary + 3+ replications -> VERIFIED inputs allowed
+- T2 SILVER: primary + few replications -> VERIFIED with warn
+- T3 BRONZE: unverified / aggregator -> WARN; insufficient sole basis
+- T4 SUSPECT: AI-content / retracted / contradicted -> REJECT
+
+A plan-forge verdict whose chain of evidence relies only on T3/T4
+cannot stand. The verdict re-runs with stronger evidence or is
+escalated to human arbitration (Layer 4 in Section 11).
+
+This is NOT optional. Every LLM gate output is post-processed by G10
+classification. corpus_db records tier per evidence cell.
+
+Recursion depth cap: 2 (LLM evidence -> G10 classification -> G10's
+own evidence classified once, no further). Beyond depth 2, escalate
+to human. This bounds the infinite regress while preserving the
+discipline for the most-cited evidence chains.
+
 ---
 
 **Authoritative version**: this MANIFESTO is updated only when:
