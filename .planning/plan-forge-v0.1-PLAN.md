@@ -200,7 +200,19 @@ challenge is by construction a vision, no LLM needed).
     publication, comparable project name, or empirical prototype
     reference). Plans with quantitative claims lacking anchor = FAIL.
     Acceptable anchor formats: `[anchor: <url>]`, `[anchor: <project-
-    name>, <duration>]`, `[anchor: prototype, <result-summary>]`.
+    name>, <duration>]`, `[anchor: prototype, <result-summary>]`,
+    `[anchor: <in-plan-derivation-pointer>]` (for claims whose anchor
+    is a derivation table or formula elsewhere in the same plan).
+  - Canonical-declaration convention (per R4 S1 fix): each unique
+    quantitative claim has ONE canonical declaration carrying the
+    full inline `[anchor: ...]`. Downstream references to the same
+    number (e.g., "as discussed earlier the 16-week estimate")
+    do NOT require their own anchor as long as they are
+    grammatically clear back-references to the canonical. Parser
+    deduplicates by claim-value + adjacency to noun phrase
+    referencing the canonical section. The mechanical implementation
+    in `g9_feasibility_anchor.py` builds the canonical-anchor set
+    in pass 1 and silences downstream-reference findings in pass 2.
   - Part B (LLM, narrow with web search): per anchor, LLM verifies via
     web search that the cited anchor (a) URL resolves OR project named
     is real AND (b) anchor data plausibly supports the claim
@@ -318,11 +330,16 @@ challenge is by construction a vision, no LLM needed).
     anchors: projected = 0.20 + 0.56 + 0.375 + 0.30 = $1.44 ->
     sits between soft and hard cap; expected to often trigger
     fallback on G10 recursive layer for the largest plans.
-  - **Soft cap (median target)**: $0.75/plan for typical plans (<= 10
-    SC). SC-14 measures median across 10 SAMPLE plans which are
-    intentionally typical-sized; large plans are NOT expected to hit
-    soft cap.
-  - **Hard cap (per-run abort)**: $2.00/plan ABSOLUTE CEILING.
+  - **Soft cap (median target)**: $0.75/plan [anchor: plan-size-aware
+    cost projection formula above evaluated at typical 10-SC plan +
+    8 citations + 5 anchors = $0.62; soft envelope = projected + 20%
+    headroom] for typical plans (<= 10 SC). SC-14 measures median
+    across 10 SAMPLE plans which are intentionally typical-sized;
+    large plans are NOT expected to hit soft cap.
+  - **Hard cap (per-run abort)**: $2.00/plan [anchor: plan-size-aware
+    formula at 28-SC + 25 citations + 15 anchors = $1.44; hard ceiling
+    = projected + 40% headroom = $2.00 absolute; ref: large-plan
+    operating budget per R3 RN-6 derivation] ABSOLUTE CEILING.
     Triggers mechanical-only fallback with explicit warning and
     corpus_db `actual_cost_usd` recorded. For large plans (~28 SC),
     $2.00 IS the expected operating budget, NOT an emergency cap.
@@ -418,15 +435,22 @@ diagnosis).
 
 ## Architecture
 
-### Five-layer defense (per MANIFESTO Section 11)
+### Six-layer defense (per MANIFESTO Section 11)
+
+Aligned with MANIFESTO Section 11's enumerated 6 layers. Multi-provider
+LLM vote is a distinct layer (L3) from narrow LLM role (L2) because
+voting is the disagreement-detection mechanism that triggers L4 human
+arbitration; without L3, L2 reduces to single-provider judgment and
+L4 has no trigger condition.
 
 | Layer | Component | LLM-dependent? | Function |
 |-------|-----------|---------------|----------|
-| L1 Mechanical | F1-F7 + G1/G2/G3/G5/G7 mechanical parts + G6/G8/G9 mechanical parts + G10 mechanical | NO | Structural falsifiability without AI inference |
-| L2 Narrow LLM with web search | G4/G6/G8/G9 Part B + G10 Part B | YES (4 providers + web search) | Narrow technical questions only (per-SC measurability, per-citation resolvability, per-anchor feasibility, per-evidence tier) |
-| L3 Independent ground truth | LEARNINGS.md (forge Phase 2) + corpus_db | NO | Validates plan-forge against pre-existing failure record; corpus accumulates more ground truth over time |
-| L4 Human arbitration | arbitration/ subpackage + Adapter B UI | NO (human decides) | When LLM evidence sufficient but split, human is final arbiter |
-| L5 Empirical track record + abandonment | outcomes table + ABANDONMENT.md generator | NO | Self-falsifying clause: 6 months no outcomes -> abandonment tombstone |
+| L1 Mechanical | F1-F7 + G1/G2/G3/G5/G7 mechanical parts + G6/G8/G9 mechanical parts + G10 mechanical | NO | Structural falsifiability without AI inference (6 of 10 G-checks fully independent of LLM) |
+| L2 Narrow LLM role | G4/G6/G8/G9 Part B + G10 Part B | YES | Narrow technical questions only (per-SC measurability, per-citation resolvability, per-anchor feasibility, per-evidence tier); NOT grand "plan or vision" judgment |
+| L3 Multi-provider vote | search_vote across Anthropic/Kimi/DeepSeek/Mimo | YES (4 providers + tool_use web search) | Majority required; ties produce indeterminate; degraded providers excluded from denominator per M3-DS rule |
+| L4 Human arbitration | arbitration/ subpackage + Adapter B UI | NO (human decides) | When LLM evidence rich and L3 vote split, decision elevates to human; mode configurable (default on_split_evidence_rich) |
+| L5 Independent ground truth corpus | 02-LEARNINGS.md (forge Phase 2, pre-plan-forge) + corpus_db append-only ledger | NO | SC-3 retroactive audit validates against pre-existing failure record; corpus accumulates more independent ground truth over time |
+| L6 Empirical track record + abandonment | outcomes table + ABANDONMENT.md generator + SC-19 self-falsifying clause | NO | Each run recorded; predicted vs actual outcomes tracked; 6 months without outcomes triggers ABANDONMENT.md tombstone with revival criteria |
 
 ### Top-level data flow
 
@@ -1008,6 +1032,15 @@ def run(
             "citing_gate": ev.provider,
             "context": ev.prompt_version,
         }
+        # R4 T1 fix: Guard degraded providers BEFORE LLM call + tier
+        # coercion to avoid spurious G10.tier_coercion Finding emission.
+        # Degraded provider evidence (no_search_judgment) has no content
+        # for G10 to classify; skip the entire classification path.
+        if ev.verdict == "no_search_judgment":
+            ev.tier = EvidenceTier.UNCLASSIFIED
+            corpus.update_evidence_tier(ev)
+            continue
+
         verdict, g10_evidence, cost = search_vote(
             llm_clients,
             prompt_template,
@@ -1030,11 +1063,6 @@ def run(
                 fix_hint="check LLM prompt + provider's structured "
                          "output support; consider prompt v1",
             ))
-        # Degraded providers (no_search_judgment) keep UNCLASSIFIED
-        # and are NOT classified by G10 (R3 M-4 fix). Skip them
-        # before reaching this path; guard:
-        if ev.verdict == "no_search_judgment":
-            ev.tier = EvidenceTier.UNCLASSIFIED  # restore
         corpus.update_evidence_tier(ev)
 
         for sub_ev in g10_evidence:
@@ -1126,8 +1154,13 @@ CREATE TABLE arbitrations (
     finding_id INTEGER REFERENCES findings(finding_id),
     triggered_at TIMESTAMP NOT NULL,
     bundle_text TEXT NOT NULL,                 -- the evidence bundle shown
-    human_verdict TEXT,                        -- "verified" / "unverified" /
-                                               -- "deferred" / "abstain"
+    human_verdict TEXT CHECK(human_verdict IS NULL OR human_verdict IN (
+        'verified', 'unverified', 'deferred', 'abstain'
+    )),                                        -- R4 T5 fix: CHECK constraint
+                                               -- enforces canonical 4-value
+                                               -- vocab matching M-1 alignment
+                                               -- (bundle.py, Verdict comment,
+                                               -- SC-17 spec all use same set)
     human_rationale TEXT,
     overrode_llm BOOLEAN,                      -- true if user disagreed
     captured_at TIMESTAMP
@@ -1797,7 +1830,7 @@ retroactive audit + review + ship.
 | T05 | pyproject.toml + skeleton + Alembic setup | pyproject.toml + src/plan_forge/ skeleton + alembic.ini + migrations/env.py | `pip install -e .` works; `alembic upgrade head` runs on empty DB |
 | T06 | verdict.py + parser.py (incl. anchor extractor for G9) | both modules + unit tests | parser handles fixtures; verdict computes from finding list; anchors extracted |
 | T07 | F1-F7 mechanical checks | 7 modules + 7 test files | each F has PASS fixture + FAIL fixture; tests pass |
-| T08 | PBR P1/P2/P5/P6 mechanical | 4 modules + tests | each PBR pass has PASS + FAIL fixture |
+| T08 | PBR P1/P2/P5 mechanical (3 modules; P6 split to T17 per R4 T4 fix avoiding overlap) | 3 modules + 3 tests | each PBR pass (P1, P2, P5) has PASS + FAIL fixture |
 | T09 | api.check_mechanical() | api.py partial | runs F + PBR; returns findings (no LLM yet) |
 | T10 | LLM client + multi-provider + tool_use web search | llm/ subpackage | Anthropic + Kimi + DeepSeek + Mimo clients + search_vote.py; Mimo tool_use support verified or fallback documented |
 | T11 | G4 + G6 + G8 (mechanical + narrow LLM Part B) + v0 prompts + fixtures | 3 modules + 3 prompts + 6 fixtures (2 per gate) | mechanical part standalone; Part B uses search_vote; prompt_version recorded |
@@ -1839,7 +1872,7 @@ Engineering layer SCs (mechanical):
 | SC-1 | MANIFESTO.md exists at repo root with Sections 1-12 (1-10 v0; 11-12 added per R1) | MANIFESTO.md absent OR README.md does not reference it as "read first" OR Sections 11/12 missing post-T02b |
 | SC-2a (manual, T04) | this PLAN.md passes manual G1-G10 walkthrough per Appendix A (pre-implementation self-check) | Appendix A walkthrough shows any G mechanical FAIL (section absent, field missing, < N threshold) on this PLAN |
 | SC-2b (automated, T33) | this PLAN.md passes plan-forge v0.1 automated self-check post-implementation | api.check(plan_forge_v0_1_plan_text) returns FAIL or VISION on either verdict; OR evidence chain contains T4-only with no T1/T2 corroboration |
-| SC-3 (revised per R1 B5) | T34 retroactive audit on forge Phase 2 archived plans (02-01..02-06) vs INDEPENDENT 02-LEARNINGS.md problem list; coverage >= 60% | (problems_caught_by_plan_forge / total_problems_in_02-LEARNINGS.md) < 60% |
+| SC-3 (revised per R1 B5) | T34 retroactive audit on forge Phase 2 archived plans (02-01..02-06) vs INDEPENDENT 02-LEARNINGS.md problem list; coverage >= 60% [anchor: tentative calibration; 100% would suggest overfitting to known cases (suspicious), < 50% means mechanical layer too weak; 60% is G7-mid threshold per Taleb barbell logic in Section 7 of MANIFESTO] | (problems_caught_by_plan_forge / total_problems_in_02-LEARNINGS.md) < 60% |
 | SC-4 | F1-F7 each have 2 test cases (PASS + FAIL fixture) | any F has fewer than 2 test cases OR FAIL fixture does not trigger the check |
 | SC-5 (revised R3 RN-2) | G1-G10 each have 2 test cases (PASS + FAIL fixture); LLM Part B integration required for G6/G8/G9/G10 (G4 Part B deferred to v0.1.1 per descope; SC-5 verifies G4 Part A mechanical only) | any G missing fixtures OR G6/G8/G9/G10 do not invoke search_vote OR G4 mechanical hedge-detection regex absent |
 | SC-6 | Adapter A library import works: `from plan_forge import check` | ImportError OR check() signature differs from spec |
@@ -1860,7 +1893,7 @@ Corpus / arbitration / outcomes / abandonment layer SCs (R1 H1/H2/H3):
 | SC-16 | corpus_db append-only: every run writes plan_runs + findings + llm_evidence with no UPDATE outside (a) plan_runs finalize_run completion fields and (b) llm_evidence.tier monotonic transition U->T1/T2/T3/T4 | SELECT detects illegal UPDATE OR schema_version table absent OR migrations history broken |
 | SC-17 | Arbitration triggers correctly per mode: on_split_evidence_rich (default) surfaces ONLY when split+rich; others per Module Designs `decide_when_to_arbitrate` | mode=on_split_evidence_rich fails to surface a split+rich finding; OR mode=off surfaces; OR captured human verdict not recorded |
 | SC-18 | outcomes table CHECK constraint enforces 4 outcome_type values; recorder column NOT NULL | INSERT with invalid outcome_type accepted OR INSERT with NULL recorder accepted |
-| SC-19 (self-falsifying) | After 6 calendar months of plan-forge use, IF corpus_db plan_runs has >= 1 entry older than 6 months AND outcomes table has 0 rows, `plan-forge abandonment-check` MUST generate ABANDONMENT.md tombstone with revival criteria | tombstone not generated when conditions met OR generated when conditions not met |
+| SC-19 (self-falsifying) | After 6 calendar months [anchor: 2 typical SaaS product-retention quarters; long enough for genuine no-use signal vs vacation/sabbatical gap; comparable to npm package abandonment heuristics (e.g., npmjs.com marks packages "last published > 1 year ago" but plan-forge has higher empirical-grounding bar)] of plan-forge use, IF corpus_db plan_runs has >= 1 entry older than 6 months AND outcomes table has 0 rows, `plan-forge abandonment-check` MUST generate ABANDONMENT.md tombstone with revival criteria | tombstone not generated when conditions met OR generated when conditions not met |
 | SC-20 | --corpus-private flag redacts plan_text (set NULL) while preserving plan_hash | --corpus-private run leaves plan_text non-NULL OR redacts plan_hash |
 
 G6/G8/G9/G10 prompt SCs (R1 B4):
@@ -1946,21 +1979,29 @@ LLM web search SCs (R1 E1):
 | SonarQube (multi-language quality) | 36 months | 48 months | 1.3 | Established baseline |
 | Coccinelle (kernel semantic patch) | 12 months | 24 months | 2.0 | DSL + transformation engine |
 
-**Mean ratio (lint-tool baseline)**: 1.66x. This applies to L1
-(mechanical layer) ONLY. L2-L6 are not lint-tools and use distinct
-per-layer baselines documented in the derivation table below. Total
-estimate is NOT a single multiplier on plan-forge's "inside-view 4
-weeks" but the SUM of per-layer estimates with each layer's own
-reference class and adjustment factor. The 1.66x figure is preserved
-for traceability to G1 outside-view discipline but the actual 16-week
-total derives from layer-by-layer composition, not from `4 weeks *
-1.66x` (which would yield 6.6 weeks and undercount L2-L6 entirely).
+**Mean ratio (lint-tool baseline)**: 1.66x [anchor: arithmetic mean
+of Ratio column above: (2.0 + 1.5 + 1.5 + 1.3 + 2.0) / 5 = 1.66].
+This applies to L1 (mechanical layer) ONLY. L2-L6 are not lint-tools
+and use distinct per-layer baselines documented in the derivation
+table below. Total estimate is NOT a single multiplier on plan-
+forge's "inside-view 4 weeks" but the SUM of per-layer estimates
+with each layer's own reference class and adjustment factor. The
+1.66x figure is preserved for traceability to G1 outside-view
+discipline but the actual 16-week total derives from layer-by-layer
+composition, not from `4 weeks * 1.66x` (which would yield 6.6
+weeks and undercount L2-L6 entirely).
 
-**Plan estimate**: 16 weeks (G1 outside-view adjusted with explicit
-new-category penalty; see derivation below).
+**Plan estimate**: 16 weeks [anchor: per-layer derivation table below
+(sum 15.6 -> round 16); 5 reference projects (ruff, semgrep, CodeQL,
+SonarQube, Coccinelle) above provide L1 baseline; L2-L6 use distinct
+anchors documented per-row in derivation] (G1 outside-view adjusted
+with explicit new-category penalty; see derivation below).
 
-**Hard ceiling**: 17 weeks. If T13 (api.check core) not complete by week
-5 (descope checkpoint 1), see "Descope Path" below.
+**Hard ceiling**: 17 weeks [anchor: 16-week base + 1-week Flyvbjerg
+uncertainty buffer for novel-category 10% padding; ref: Flyvbjerg et
+al. 2002 "Underestimating Costs in Public Works" cited in External
+Voices]. If T13 (api.check core) not complete by week 5 (descope
+checkpoint 1), see "Descope Path" below.
 
 **plan-forge v0.1 is a NEW CATEGORY of tool with no exact reference
 class.** Existing reference class is PURE LINT tools (mechanical only).
@@ -2251,7 +2292,14 @@ ritualistic and is abandoned. The empirical-grounding commitment in
 MANIFESTO Section 6 makes this an explicit accept/reject criterion, not
 a face-saving avoidance.
 
-## Reviewer Focus (for cross-AI review of this PLAN R2)
+## Reviewer Focus (historical; this section guided R2; preserved for traceability)
+
+NOTE per R4 T7: this section was written for R2 (R1-fix verification)
+and remains as historical record of what R2 reviewers focused on.
+R3 and R4 reviews proceeded with their own prompts. R4 verdict
+(b) STRATEGIC FIX + PASS closes the review phase; no R5 prompt is
+expected. The "R2" references below are NOT stale errors; they
+describe what was asked of R2 specifically.
 
 R2 cross-AI reviewers should pay particular attention to:
 
@@ -2385,7 +2433,30 @@ decisions below.)
 Plan-forge v0.1 PLAN versions (per F5 R-tag pruner: history outside
 body):
 
-- 2026-05-19 v4 (this revision): R3 cross-AI review integrated.
+- 2026-05-19 v5 (this revision): R4 cross-AI review integrated;
+  3-model consensus verdict was (b) STRATEGIC FIX + PASS. Closed
+  R4 strategic items: S1 (G9 self-application; canonical
+  declarations of 16-week / $0.75 / $2.00 / 60% / 6-month / 1.66x
+  given inline `[anchor: ...]`; canonical-declaration convention
+  added to G9 Requirements so downstream references do not need
+  duplicate anchors), T2 (MANIFESTO Section 3 "eight" -> "ten";
+  G9/G10 added to concerns table; Section 8/10 "G1-G8" -> "G1-G10";
+  Commitment 1 updated), T3 (PLAN "Five-layer defense" -> "Six-
+  layer" aligned with MANIFESTO Section 11's 6 enumerated layers;
+  table expanded to show L1-L6 explicitly). Closed R4 tactical:
+  T1 (G10 degraded-provider guard moved BEFORE try/except to
+  prevent spurious tier_coercion Finding), T4 (T08 narrowed to
+  P1/P2/P5; T17 owns P6 alone), T5 (arbitrations.human_verdict
+  gained CHECK constraint matching M-1 canonical 4-value vocab),
+  T6 (Appendix A "line 426" reference clarified as v0-historical),
+  T7 (Reviewer Focus section header marked historical R2-specific
+  with traceability note). R4 verdict: PASS; proceed to T05
+  implementation. No R5 expected. PM5 anti-pattern explicitly
+  acknowledged: 4 review rounds + 36 fixes + 0 source code is the
+  exact "polish stage = scope wrong" signal; further review delayed
+  T05 has no review-loop justification.
+
+- 2026-05-19 v4 (R3 revision): R3 cross-AI review integrated.
   Closed R3 BLOCKERs: RN-1 ($0.50 residual refs across Known Risks /
   PM6 / BS7 / Open Q / Scope-Challenge Q3 / Reviewer Focus /
   CHANGELOG entry replaced with $0.75 soft / $2.00 hard), RN-2
@@ -2413,7 +2484,7 @@ body):
   Closed B1 (deleted --ship-and-iterate flag; Accommodation rewritten
   as honest scope statement), B2 (16-week estimate replaces 4-week
   inside-view; explicit new-category reference class derivation),
-  B3 (5-layer defense via MANIFESTO Sections 11+12 + narrowed LLM
+  B3 (6-layer defense via MANIFESTO Sections 11+12 + narrowed LLM
   role to per-SC/per-citation/per-anchor/per-evidence questions),
   B4 (G6/G8/G9/G10 v0 prompts inlined; Prompt Versioning Policy
   added), B5 (SC-3 revised to use independent 02-LEARNINGS.md
@@ -2451,7 +2522,9 @@ self-check after library implementation.
 
 ### G1 Reference Class Forecasting -- PASS
 
-- `## Reference Class` section present (line 426)
+- `## Reference Class` section present (line 426 in v0; current line
+  shifted due to R1-R4 expansion; section presence verifiable by
+  heading grep regardless of line number)
 - 5 historical projects listed (ruff, semgrep, CodeQL, SonarQube, Coccinelle)
 - Each row has name + scope + actual duration + ratio
 - Mean ratio computed (1.66); outside-view estimate computed (6.6 weeks)

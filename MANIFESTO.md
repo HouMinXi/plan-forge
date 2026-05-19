@@ -62,11 +62,14 @@ ADR, migration plan, research grant, pitch deck, policy proposal, or roadmap
 in a context where AI assistance is present. This is a broader user set than
 forge-code (which targets developers reviewing code).
 
-## 3. The Eight Epistemic Concerns
+## 3. The Ten Epistemic Concerns
 
-plan-forge enforces eight distinct epistemological checks (G1-G8). Each
+plan-forge enforces ten distinct epistemological checks (G1-G10). Each
 derives from a published research tradition. Each is mandatory; none is
-opt-in. Plans that fail any check are blocked, not warned.
+opt-in. Plans that fail any check are blocked, not warned. G9 + G10
+were added per R1 cross-AI review when narrowing the LLM role to per-
+SC / per-citation questions revealed two additional gaps: feasibility
+anchoring and recursive evidence provenance.
 
 | ID | Concern | Source |
 |----|---------|--------|
@@ -75,9 +78,11 @@ opt-in. Plans that fail any check are blocked, not warned.
 | G3 | Pre-mortem Section (mandatory) | Klein, HBR 2007. Plans must imagine and document their own failure. |
 | G4 | Probability Calibration | Tetlock, 2015. Plans must use numeric probabilities, not hedge words. |
 | G5 | Antifragility Audit | Taleb, 2007. Plans must specify how they respond to chaos. |
-| G6 | Plan-vs-Vision Falsifiability | Popper, 1934. Every success criterion must have an explicit fail condition. |
+| G6 | SC Falsifiability (per-SC measurability) | Popper, 1934. Every success criterion must have an explicit fail condition with a measurable predicate. |
 | G7 | Scope Challenge (barbell) | Taleb meta + project hygiene. Plans must justify their existence and avoid mediocre middle ground. |
-| G8 | Collective Bias / Source Diversity | Tetlock + observation that AI training corpora homogenize views. Plans must include non-AI primary sources. |
+| G8 | Source Diversity (per-citation resolvability) | Tetlock + observation that AI training corpora homogenize views. Plans must cite non-AI primary sources; each citation must resolve to a real publication. |
+| G9 | Feasibility Anchor (per-anchor support) | Empirical-grounding commitment per Section 6 + replication-crisis literature (Open Science Collaboration 2015; Ioannidis 2005). Every quantitative claim must cite a real-world anchor (URL / project / prototype) whose data plausibly supports the claim magnitude. |
+| G10 | Recursive Evidence Provenance | Section 6 + Section 12. Every LLM-cited evidence item must be classified into provenance tier T1-T4. Verdicts cannot stand on T3/T4-only chains. |
 
 The complementary mechanical layer (F1-F7) catches writing-style failures
 empirically observed across 50+ rounds of cross-AI review on forge-code v2.0
@@ -165,7 +170,7 @@ The following are explicitly NOT what plan-forge is or will become:
 Three commitments are non-negotiable. Any v0.x or v1.x that breaks them is
 not plan-forge.
 
-### Commitment 1: G1-G8 are gates, not suggestions
+### Commitment 1: G1-G10 are gates, not suggestions
 
 Every G is a hard fail. Plans that lack a Pre-mortem section do not get a
 warning; they get FAIL. Plans that lack a Reference Class section do not
@@ -233,7 +238,7 @@ If you propose a new check (G9, G10, ...), you must:
 3. Demonstrate the check has measurable false-positive and false-negative
    rates on the existing corpus.
 4. Convince two of three external LLM panels (Anthropic + Kimi + DeepSeek
-   + Mimo, pick 3) that the check is non-redundant with existing G1-G8.
+   + Mimo, pick 3) that the check is non-redundant with existing G1-G10.
 
 If you propose deleting an existing G, you must:
 
@@ -265,7 +270,7 @@ plan-forge can fail in specific ways. We acknowledge them publicly:
   gates; if both fail simultaneously, mechanical layer still has 6/8
   coverage.
 
-- **Tool obsolescence**: future LLM models natively perform G1-G8 reasoning,
+- **Tool obsolescence**: future LLM models natively perform G1-G10 reasoning,
   making plan-forge redundant. Mitigation: ship anyway. MANIFESTO + corpus
   + LEARNINGS are durable IP independent of tool layer.
 
@@ -275,7 +280,7 @@ If a future contributor reads this MANIFESTO and immediately begins
 discussing markdown formatting rules, they have failed the test. The
 correct first question is:
 
-> What plan recently failed in a way G1-G8 would have caught? Was the
+> What plan recently failed in a way G1-G10 would have caught? Was the
 > failure real, or am I projecting?
 
 Empirical evidence comes first. Theory follows.
