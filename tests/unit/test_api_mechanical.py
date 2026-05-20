@@ -199,10 +199,17 @@ def test_compute_engineering_rule():
 # Verify check() and scaffold() stubs raise NotImplementedError
 # ---------------------------------------------------------------------------
 
-def test_check_stub_raises():
-    """check() is a not-yet-implemented stub; must raise NotImplementedError (not silently pass)."""
-    with pytest.raises(NotImplementedError):
-        check("# Any plan")
+def test_check_returns_verdict():
+    """check() must return a Verdict (not raise NotImplementedError).
+
+    Mechanical-only mode (llm_clients=[]) avoids network calls in this test.
+    """
+    result = check("# Any plan", llm_clients=[])
+    assert isinstance(result, Verdict)
+    assert result.engineering in (EngineeringVerdict.PASS, EngineeringVerdict.FAIL)
+    assert result.epistemic in (
+        EpistemicVerdict.PASS, EpistemicVerdict.FAIL, EpistemicVerdict.VISION
+    )
 
 
 def test_scaffold_stub_raises():

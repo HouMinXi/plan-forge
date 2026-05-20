@@ -107,3 +107,26 @@ class Verdict:
     tier_summary: dict = field(default_factory=dict)
     active_providers: list[str] = field(default_factory=list)
     arbitration_resolution: str | None = None
+
+    def summary(self) -> str:
+        """Human-readable summary of verdict and finding counts by severity.
+
+        Intended for CLI display and downstream adapters.
+        Lists LLM providers only when active_providers is non-empty.
+        """
+        counts: dict[Severity, int] = {s: 0 for s in Severity}
+        for f in self.findings:
+            counts[f.severity] += 1
+
+        lines = [
+            f"Engineering: {self.engineering.value}",
+            f"Epistemic: {self.epistemic.value}",
+            f"Findings: {len(self.findings)} total",
+            f"  BLOCKER: {counts[Severity.BLOCKER]}",
+            f"  HIGH: {counts[Severity.HIGH]}",
+            f"  MEDIUM: {counts[Severity.MEDIUM]}",
+            f"  LOW: {counts[Severity.LOW]}",
+        ]
+        if self.active_providers:
+            lines.append(f"LLM providers: {', '.join(self.active_providers)}")
+        return "\n".join(lines)
