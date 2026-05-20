@@ -1,4 +1,4 @@
-"""Tests for llm/mimo_client.py (Phase 3)."""
+"""Tests for llm/mimo_client.py."""
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch

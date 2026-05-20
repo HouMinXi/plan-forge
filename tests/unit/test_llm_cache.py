@@ -1,4 +1,4 @@
-"""Tests for llm/cache.py and corpus/db.py (Phase 1)."""
+"""Tests for llm/cache.py and corpus/db.py."""
 from __future__ import annotations
 
 

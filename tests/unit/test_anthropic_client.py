@@ -1,4 +1,4 @@
-"""Tests for llm/anthropic_client.py (Phase 3)."""
+"""Tests for llm/anthropic_client.py."""
 from __future__ import annotations
 
 from datetime import datetime

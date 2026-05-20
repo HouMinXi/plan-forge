@@ -1,4 +1,4 @@
-"""Tests for llm/kimi_client.py (Phase 3)."""
+"""Tests for llm/kimi_client.py."""
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch

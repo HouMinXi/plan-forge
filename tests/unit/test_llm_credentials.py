@@ -1,4 +1,4 @@
-"""Tests for llm/credentials.py (Phase 2)."""
+"""Tests for llm/credentials.py."""
 from __future__ import annotations
 
 import subprocess

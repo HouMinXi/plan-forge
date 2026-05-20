@@ -1,4 +1,4 @@
-"""Tests for Verdict.active_providers field (Phase 5 M4)."""
+"""Tests for Verdict.active_providers field."""
 from __future__ import annotations
 
 from plan_forge.verdict import (

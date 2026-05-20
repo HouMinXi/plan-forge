@@ -1,4 +1,4 @@
-"""Tests for llm/mocks.py (Phase 2)."""
+"""Tests for llm/mocks.py."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
