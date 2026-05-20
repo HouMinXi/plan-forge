@@ -129,7 +129,7 @@ _ANCHOR_RE = re.compile(r'\[anchor:\s*([^\]]+)\]', re.IGNORECASE)
 
 # G9 downstream back-reference heuristic: if any of these phrases is within
 # 80 chars of the quantitative claim, treat as a back-reference to the
-# canonical declaration (R4 S1 canonical-declaration convention).
+# canonical declaration.
 _BACK_REF_PHRASES = (
     'as discussed',
     'per reference class',
@@ -606,7 +606,7 @@ def _classify_anchor_type(anchor_text: str) -> str:
 def _is_back_reference(context: str) -> bool:
     """Return True if context contains a downstream back-reference phrase.
 
-    Per R4 S1 canonical-declaration convention: claims in downstream
+    Under the canonical-declaration convention: claims in downstream
     references to a canonical anchor do NOT need their own [anchor: ...].
     Any of the _BACK_REF_PHRASES within 80 chars of the claim suffices.
     """

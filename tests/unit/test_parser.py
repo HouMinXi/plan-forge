@@ -400,7 +400,7 @@ def test_parse_quantitative_claims_without_anchor():
 def test_parse_anchor_back_reference_exempted():
     """Back-references to canonical anchors are NOT flagged as unanchored.
 
-    Per R4 S1 canonical-declaration convention: claims whose surrounding
+    Under the canonical-declaration convention: claims whose surrounding
     text contains back-reference phrases are skipped.
     """
     md = (
