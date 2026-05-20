@@ -74,7 +74,7 @@ def check(parsed: ParsedPlan, **kwargs) -> list[Finding]:
     body_tokens = _tokens(parsed.raw_text)
 
     # Accumulate (sentence_len, finding) so we can sort by original length.
-    # SUBSPEC: "top 10 by sentence length" -- sort before message is truncated to 80 chars.
+    # sort by original length first -- longest mismatched sentences are flagged; cap at 10
     pending: list[tuple[int, Finding]] = []
 
     for idx, s in enumerate(sentences):
@@ -100,6 +100,6 @@ def check(parsed: ParsedPlan, **kwargs) -> list[Finding]:
             ),
         )))
 
-    # Sort by original sentence length descending (SUBSPEC: top 10 by sentence length)
+    # longest first
     pending.sort(key=lambda x: -x[0])
     return [f for _, f in pending[:_FINDING_CAP]]

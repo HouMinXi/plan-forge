@@ -32,7 +32,7 @@ def check(parsed: ParsedPlan, **kwargs) -> list[Finding]:
     for sc in parsed.sc_table:
         count = len(_RTAG_RE.findall(sc.body))
         if count > _RTAG_CAP:
-            # Use sc.number + sc.suffix per SUBSPEC: "SC-{sc.number}{sc.suffix or ''}:line:{sc.line}".
+            # sc.full_id already has the "SC-" prefix; use sc.number to avoid "SC-SC-1".
             # full_id already contains the "SC-" prefix; using it would produce "SC-SC-1:line:0".
             location = f"SC-{sc.number}{sc.suffix or ''}:line:{sc.line}"
             findings.append(Finding(

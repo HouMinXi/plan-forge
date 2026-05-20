@@ -1,7 +1,7 @@
 """PBR (Perspective-Based Reading) checks package.
 
 Exposes run(parsed) which aggregates P1, P2, P5 findings in stable
-order.  P6 is split to T17 per PLAN R4 T4 fix and is NOT in this scope.
+order.  P6 (scope-drift detection) is not yet implemented.
 """
 from __future__ import annotations
 

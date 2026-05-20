@@ -196,7 +196,7 @@ def test_parse_hedge_words_case_insensitive():
 def test_parse_hedge_words_state_machine():
     """REGRESSION: hedge words inside fenced code blocks NOT flagged.
 
-    R3 RN-5 fix: the state machine must track in_code_block across
+    The fence-width state machine must track in_code_block across
     fence open/close, not just skip fence lines.
     """
     md = (

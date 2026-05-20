@@ -21,7 +21,7 @@ def check_mechanical(
     """Run mechanical checks (F1-F7 + PBR P1/P2/P5) only.
 
     Does NOT run epistemological gates (G1-G10).  Use check()
-    (T13) for the full pipeline.
+    for the full pipeline.
 
     Args:
         plan_text: raw markdown text of the plan document.
@@ -46,7 +46,7 @@ def check_mechanical(
 def _compute_engineering(findings: list[Finding]) -> EngineeringVerdict:
     """Engineering verdict: FAIL iff any finding has severity BLOCKER or HIGH.
 
-    Per D2: HIGH means plan-failure signal; BLOCKER is always fatal.
+    HIGH and BLOCKER both indicate plan-failure; MEDIUM and LOW do not.
     MEDIUM and LOW are informational and do not flip engineering to FAIL.
     """
     fail_severities = {Severity.BLOCKER, Severity.HIGH}
@@ -58,7 +58,7 @@ def _compute_engineering(findings: list[Finding]) -> EngineeringVerdict:
 def check(plan_text: str, **kwargs) -> Verdict:
     """Run all gates on plan_text and return a Verdict.
 
-    T13 implements this.
+    Not yet implemented.
     """
     raise NotImplementedError
 
@@ -66,6 +66,6 @@ def check(plan_text: str, **kwargs) -> Verdict:
 def scaffold(name: str, output_dir: Path | None = None) -> Path:
     """Generate a plan skeleton from the default template.
 
-    T14 implements this.
+    Not yet implemented.
     """
     raise NotImplementedError

@@ -159,7 +159,7 @@ def test_check_mechanical_preamble_kwarg_passed_through():
 def test_compute_engineering_rule():
     """Six sub-assertions for the D2 engineering verdict rule.
 
-    D2: FAIL iff any finding has severity in {BLOCKER, HIGH}.
+    FAIL iff any finding has severity BLOCKER or HIGH; MEDIUM and LOW do not trigger FAIL.
     MEDIUM and LOW are informational; they must NOT flip engineering.
     """
     # Sub-assertion 1: empty list -> PASS
@@ -196,16 +196,16 @@ def test_compute_engineering_rule():
 
 
 # ---------------------------------------------------------------------------
-# Stub coverage: verify T13/T14 stubs raise NotImplementedError
+# Verify check() and scaffold() stubs raise NotImplementedError
 # ---------------------------------------------------------------------------
 
 def test_check_stub_raises():
-    """check() is a T13 stub; must raise NotImplementedError (not silently pass)."""
+    """check() is a not-yet-implemented stub; must raise NotImplementedError (not silently pass)."""
     with pytest.raises(NotImplementedError):
         check("# Any plan")
 
 
 def test_scaffold_stub_raises():
-    """scaffold() is a T14 stub; must raise NotImplementedError."""
+    """scaffold() is a not-yet-implemented stub; must raise NotImplementedError."""
     with pytest.raises(NotImplementedError):
         scaffold("my-plan")

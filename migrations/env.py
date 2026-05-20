@@ -21,7 +21,7 @@ config.set_main_option("sqlalchemy.url", _corpus_url)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from plan_forge.corpus.models import Base
+from plan_forge.corpus.models import Base  # noqa: E402
 target_metadata = Base.metadata
 
 

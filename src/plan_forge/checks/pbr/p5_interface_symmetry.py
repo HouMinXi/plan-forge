@@ -29,7 +29,7 @@ _FILE_FUNC_RE = re.compile(r"(\w+)\.py:(\w+)")
 # Fence pattern for code block extraction within section bodies
 _FENCE_RE = re.compile(r"^(`{3,})", re.MULTILINE)
 
-# Built-in exemptions (SUBSPEC section 4, P5 Built-in exemptions)
+# Built-in convention names exempt by design (entry points shared across all checks)
 _EXEMPT_NAMES = frozenset({"check", "run"})
 
 

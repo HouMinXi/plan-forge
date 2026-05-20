@@ -3,7 +3,7 @@
 Detects imprecise before/after temporal phrases adjacent to fuzzy
 lifecycle verbs (return, exit, complete, finish, done).  Skips
 fenced code blocks using the fence-width-aware state machine from
-parser.py (R3 RN-5 compatible pattern).
+parser.py (fence-width-aware pattern).
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def _phrase_contains_fuzzy(phrase: str) -> bool:
 def _is_acceptable(verb: str, phrase: str) -> bool:
     """Return True if this before/after + phrase is a precise anchor.
 
-    Acceptable cases per SUBSPEC:
+    Acceptable cases (non-vague temporal references):
     1. phrase matches one of the known acceptable multi-word patterns.
     2. phrase contains a dunder (__exit__, __enter__, etc.).
     3. Token immediately after return/exit starts with _ or is capitalized.

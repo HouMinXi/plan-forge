@@ -63,8 +63,8 @@ def check(parsed: ParsedPlan, **kwargs) -> list[Finding]:
             for m in _TEST_REF_RE.finditer(line):
                 defined_tests.add(m.group(0))
 
-    # Early exit: if either side is absent, skip -- SUBSPEC: "Empty-SC-table OR
-    # empty-defined-tests -> no findings; absence of test section is G3/G7 territory."
+    # if either side is absent, skip -- absence of a test section is not F1's concern
+    # (other checks cover missing required sections)
     if not claimed_per_sc or not defined_tests:
         return []
 

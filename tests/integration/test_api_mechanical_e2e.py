@@ -1,4 +1,4 @@
-"""Integration tests: check_mechanical() end-to-end on T06 fixtures.
+"""Integration tests: check_mechanical() end-to-end on existing fixtures.
 
 Snapshot-style assertions: engineering verdict + total finding count +
 check_id distribution are captured.  If a later commit changes any
@@ -49,7 +49,7 @@ def _assert_verdict_structure(result: Verdict, fixture_name: str) -> None:
         )
     # D3 contract: epistemic is always VISION in mechanical-only mode
     assert result.epistemic == EpistemicVerdict.VISION, (
-        f"{fixture_name}: epistemic must always be VISION in T09 mode"
+        f"{fixture_name}: epistemic must always be VISION in mechanical-only mode"
     )
 
 
@@ -58,7 +58,7 @@ def _assert_verdict_structure(result: Verdict, fixture_name: str) -> None:
 # ---------------------------------------------------------------------------
 
 def test_api_mechanical_on_pass_well_formed():
-    """End-to-end on the T06 well-formed pass fixture.
+    """End-to-end on the well-formed pass fixture.
 
     Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
 
@@ -115,7 +115,7 @@ def test_api_mechanical_on_pass_well_formed():
 # ---------------------------------------------------------------------------
 
 def test_api_mechanical_on_fail_missing_premortem():
-    """End-to-end on the T06 fixture that omits the Pre-mortem section.
+    """End-to-end on the fixture that omits the Pre-mortem section.
 
     Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
 
@@ -173,7 +173,7 @@ def test_api_mechanical_on_fail_missing_premortem():
 # ---------------------------------------------------------------------------
 
 def test_api_mechanical_on_fail_no_g9_anchor():
-    """End-to-end on the T06 fixture that omits G9 inline anchors on the Goal.
+    """End-to-end on the fixture that omits G9 inline anchors on the Goal.
 
     Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
 

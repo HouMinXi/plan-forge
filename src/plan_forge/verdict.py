@@ -1,8 +1,7 @@
 """Verdict, Finding, Severity, and related dataclasses.
 
-Rewritten per PLAN Module Designs verdict.py section.
 Field ordering: non-defaulted fields precede defaulted ones (Python
-dataclass requirement; R2 H-E fix).
+dataclass requirement).
 """
 from __future__ import annotations
 
@@ -37,10 +36,10 @@ class EpistemicVerdict(str, Enum):
 class EvidenceTier(str, Enum):
     """Provenance tier for LLM-fetched evidence (G10).
 
-    T4_SUSPECT (not T4_UNVERIFIABLE) per PLAN G10 Requirements and
-    R3 RN-4 fix.  UNCLASSIFIED is the default at construction time;
-    G10 post-processing upgrades U -> T1/T2/T3/T4 (monotonic
-    transition).
+    T4_SUSPECT marks evidence requiring extra scrutiny (not T4_UNVERIFIABLE,
+    which conflates absence of data with presence of a flaw).
+    UNCLASSIFIED is the default; post-processing upgrades U to T1-T4
+    monotonically.
     """
     T1_GOLD = "T1"
     T2_SILVER = "T2"

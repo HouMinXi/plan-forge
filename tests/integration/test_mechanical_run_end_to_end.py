@@ -1,7 +1,7 @@
-"""Integration test: mechanical.run() on all T06 fixtures.
+"""Integration test: mechanical.run() on all existing check fixtures.
 
 Smoke-tests that run() returns list[Finding] without raising for any
-of the three T06 fixtures.  Does NOT assert specific findings because
+of the three plan fixtures.  Does NOT assert specific findings because
 those fixtures were designed for G1-G10 validation.
 """
 import pathlib
@@ -14,16 +14,16 @@ from plan_forge.verdict import Finding
 
 _FIXTURES = pathlib.Path(__file__).parent.parent / "fixtures"
 
-_T06_FIXTURES = [
+_PLAN_FIXTURES = [
     "pass_well_formed.md",
     "fail_missing_premortem.md",
     "fail_no_g9_anchor.md",
 ]
 
 
-@pytest.mark.parametrize("fixture_name", _T06_FIXTURES)
+@pytest.mark.parametrize("fixture_name", _PLAN_FIXTURES)
 def test_mechanical_run_does_not_raise(fixture_name: str):
-    """run() must return list[Finding] and not raise for any T06 fixture."""
+    """run() must return list[Finding] and not raise for any existing fixture."""
     text = (_FIXTURES / fixture_name).read_text(encoding="utf-8")
     parsed = parse(text)
     result = mechanical.run(parsed)

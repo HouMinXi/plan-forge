@@ -64,7 +64,7 @@ def test_evidence_tier_values():
 
 
 def test_evidence_tier_t4_is_suspect():
-    """T4 MUST be T4_SUSPECT, not T4_UNVERIFIABLE (R3 RN-4 fix)."""
+    """T4_SUSPECT (not T4_UNVERIFIABLE) -- the name reflects suspicion, not absence of data."""
     assert hasattr(EvidenceTier, "T4_SUSPECT")
     assert not hasattr(EvidenceTier, "T4_UNVERIFIABLE")
     assert EvidenceTier.T4_SUSPECT.value == "T4"
@@ -93,7 +93,7 @@ def test_llm_evidence_required_fields():
 
 
 def test_llm_evidence_tier_defaults_to_unclassified():
-    """tier defaults to UNCLASSIFIED per R3 RN-4."""
+    """tier defaults to UNCLASSIFIED at construction time."""
     ev = LLMEvidence(
         provider="kimi",
         model="k2",
@@ -134,7 +134,7 @@ def test_llm_evidence_search_evidence_default():
 
 
 def test_llm_evidence_positional_order():
-    """Regression for R2 H-E: positional arg order must match declaration.
+    """Positional arg order must match field declaration order (dataclass requirement).
 
     provider, model, verdict, reasoning, prompt_version, run_id
     (all required, in that order).
@@ -198,7 +198,7 @@ def test_finding_evidence_tier_summary_defaults_to_empty_dict():
 
 
 def test_finding_positional_order():
-    """Regression for R2 H-E: positional arg order."""
+    """Positional arg order preserved after field addition."""
     f = Finding("G1", Severity.HIGH, "line 5", "missing ref class")
     assert f.check_id == "G1"
     assert f.severity == Severity.HIGH
@@ -261,7 +261,7 @@ def test_verdict_arbitration_resolution_defaults_to_none():
 
 
 def test_verdict_positional_order():
-    """Regression for R2 H-E: positional arg order."""
+    """Positional arg order preserved after field addition."""
     v = Verdict(EngineeringVerdict.FAIL, EpistemicVerdict.VISION)
     assert v.engineering == EngineeringVerdict.FAIL
     assert v.epistemic == EpistemicVerdict.VISION

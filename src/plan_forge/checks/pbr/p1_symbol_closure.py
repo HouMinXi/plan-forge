@@ -161,8 +161,8 @@ def check(parsed: ParsedPlan) -> list[Finding]:
     findings: list[Finding] = []
     lines = parsed.raw_text.splitlines()
 
-    # code_block_lines not used in the check loop (SUBSPEC: code-block occurrences
-    # count as use, not definition; the >= 2 rule already handles this correctly).
+    # code_block_lines not used in the check loop: code-block occurrences
+    # count as use, not definition; the >= 2 occurrence rule covers this.
     all_occurrences, _ = _extract_identifiers_with_lines(
         parsed.raw_text
     )

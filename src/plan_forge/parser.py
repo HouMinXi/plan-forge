@@ -1,16 +1,15 @@
 """Markdown plan parser -- produces ParsedPlan.
 
-Implements the data extraction per PLAN Module Designs parser.py section.
 Uses line-by-line string processing (no external tokenizer needed for
 the structured sections in plan documents).  Includes:
 
   - Section extraction (## and ### headings)
   - SC table parsing (rows matching SC-N / SC-Na patterns)
   - Risk register parsing (Known / Gray Rhinos / Black Swans subsections)
-  - Hedge word detection with in_code_block state machine (R3 RN-5 fix)
+  - Hedge word detection with fence-width-aware in_code_block state machine
   - Citation extraction from External Voices section
   - G9 anchor extraction + quantitative claims without anchor
-  - ai_smell_phrases: empty list for v0.1; T11 will populate this field
+  - ai_smell_phrases: not populated in v0.1; reserved for future extension
 """
 from __future__ import annotations
 
@@ -74,8 +73,7 @@ class ParsedPlan:
     risks: list[ParsedRisk] = field(default_factory=list)
     hedge_word_locations: list[tuple[int, str]] = field(default_factory=list)
     citations: list[str] = field(default_factory=list)
-    # ai_smell_phrases: populated by T11 (anti-ai phrase detection);
-    # returns empty list for v0.1.  Type: list[tuple[int, str]] = (line, phrase)
+    # not populated in v0.1; reserved for future anti-AI phrase detection
     ai_smell_phrases: list[tuple[int, str]] = field(default_factory=list)
     anchors: list[ParsedAnchor] = field(default_factory=list)
     quantitative_claims_without_anchor: list[tuple[int, str]] = field(
@@ -87,7 +85,7 @@ class ParsedPlan:
 # Regex constants
 # ---------------------------------------------------------------------------
 
-# G4 hedge words -- 11-word canonical list per PLAN Requirements G4.
+# G4 hedge words (11-word canonical list).
 # PLAN spec: "maybe / likely / probably / perhaps / possibly / seems /
 #  appears / should / could / might / may"
 # Code regex MUST match this list exactly (P5 interface-symmetry rule).
@@ -498,7 +496,7 @@ def _extract_risks(plan: ParsedPlan, lines: list[str]) -> None:
 def _extract_hedge_words(plan: ParsedPlan, lines: list[str]) -> None:
     """Detect hedge words in prose, skipping fenced code blocks.
 
-    CRITICAL: uses in_code_block state machine (R3 RN-5 fix).  Tracks
+    CRITICAL: uses fence-width-aware state machine.  Tracks
     fence width so that ```` ```` ```` blocks are not prematurely closed
     by ``` fences (CommonMark spec compliance).
 
@@ -577,7 +575,7 @@ def _extract_citations(plan: ParsedPlan, lines: list[str]) -> None:
 def _classify_anchor_type(anchor_text: str) -> str:
     """Classify anchor type from anchor content string.
 
-    Classification rules per PLAN G9 Requirements + task spec:
+    Classification rules:
       - starts with http or contains :// -> "url"
       - contains "prototype" -> "prototype"
       - contains "ref:" or "et al" -> "publication"
@@ -634,7 +632,7 @@ def _extract_g9_anchors(plan: ParsedPlan, lines: list[str]) -> None:
 
     Processing rules:
     1. Skip fenced code blocks entirely (same in_code_block state machine
-       as hedge-word detection per R3 RN-5 rationale).
+       as hedge-word detection).
     2. Skip table rows entirely: the Reference Class table IS the anchor
        source; requiring inline [anchor: ...] on each cell would be
        redundant.  G9 only checks prose paragraphs.
