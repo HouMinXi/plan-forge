@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from plan_forge.checks.epistemic.g6_sc_falsifiability import check
 from plan_forge.llm.client import LLMResponse
 from plan_forge.llm.mocks import MockClient
@@ -111,7 +113,8 @@ class TestG6PartB:
         clients = [
             _mock_client("mock_a", "UNVERIFIED"),
         ]
-        findings = check(parsed, clients)
+        with pytest.warns(UserWarning, match="single provider"):
+            findings = check(parsed, clients)
         llm = [f for f in findings if f.check_id == "G6.B.llm"]
         assert len(llm) > 0
         ev = llm[0].llm_evidence
