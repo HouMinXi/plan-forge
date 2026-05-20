@@ -106,5 +106,5 @@ class Verdict:
     corpus_run_id: int | None = None
     arbitration_triggered: bool = False
     tier_summary: dict = field(default_factory=dict)
-    active_providers: list[str] = field(default_factory=list)  # added T10 M4
+    active_providers: list[str] = field(default_factory=list)
     arbitration_resolution: str | None = None

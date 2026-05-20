@@ -9,7 +9,7 @@ Known limitations (project memory reference_deepseek_compact.md):
   - cache_control is ignored (every request retransmits full context).
   - Do NOT use reasoning models with tool_use.
 
-If tool_use_ok=False after health_check, caller (search_vote / T11+)
+If tool_use_ok=False after health_check, callers
 treats DeepSeek evidence as UNCLASSIFIED (no_search_judgment tier).
 """
 from __future__ import annotations

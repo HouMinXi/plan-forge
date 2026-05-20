@@ -5,8 +5,7 @@ Uses an Anthropic-compatible endpoint:
 
 Tool_use support is unconfirmed at spec time.  health_check probes;
 if tool_use_ok=False, all Mimo evidence is tagged UNCLASSIFIED by
-downstream search_vote / T11+ callers (no_search_judgment fallback
-per PLAN SC-27 and SUBSPEC 6.4).
+all Mimo evidence is tagged UNCLASSIFIED (no_search_judgment fallback).
 
 Credential path (pass): api/mimo
 Env fallback: PLAN_FORGE_MIMO_API_KEY
@@ -48,8 +47,7 @@ class MimoClient:
     model = _MIMO_MODEL
 
     def __init__(self, api_key: str) -> None:
-        # SUBSPEC interpretation: Mimo uses Anthropic-compatible endpoint;
-        # discovered from bashrc claude_mimo() function (see env setup notes).
+        # endpoint confirmed via claude_mimo() alias in shell config
         self._client = anthropic.Anthropic(
             api_key=api_key,
             base_url=_MIMO_BASE_URL,

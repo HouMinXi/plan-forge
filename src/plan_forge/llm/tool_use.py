@@ -8,9 +8,9 @@ Each provider uses a different tool_use protocol:
   - Mimo: tool_use support unconfirmed; health_check probes; if absent,
     all Mimo evidence is tagged UNCLASSIFIED (no_search_judgment tier)
 
-SUBSPEC interpretation: MIMO_WEB_SEARCH_TOOL is None because Mimo's
-tool_use API was not confirmed at spec time.  The mimo_client health_check
-will attempt a minimal tool_use probe and set tool_use_ok accordingly.
+MIMO_WEB_SEARCH_TOOL is None because Mimo's tool_use support was not
+confirmed; mimo_client health_check probes at startup and sets
+tool_use_ok accordingly.
 """
 from __future__ import annotations
 

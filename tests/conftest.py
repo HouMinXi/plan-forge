@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for plan-forge tests (T10 additions).
+"""Shared pytest fixtures for plan-forge tests.
 
 Fixtures provided:
   corpus_engine   -- session-scoped SQLAlchemy engine (SQLite by default);

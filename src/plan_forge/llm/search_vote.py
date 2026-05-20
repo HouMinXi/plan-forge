@@ -8,7 +8,6 @@ via majority vote.  Handles four arities:
   N=2  consensus      -- both agree -> consensus; disagree -> indeterminate
   N=3+ majority       -- floor(N/2)+1 strict majority; else indeterminate
 
-See SUBSPEC D5 for the full arity matrix.
 """
 from __future__ import annotations
 

@@ -1,7 +1,8 @@
 """SQLAlchemy ORM models for the plan-forge corpus DB.
 
-T10 creates the LLMCache model only.  T22 will add the 6 corpus
-event tables (plan_runs, findings, llm_evidence, arbitrations,
+Contains the LLMCache model for caching LLM call results.
+The 6 corpus outcomes, schema_version) live in a later migration.
+outcomes, schema_version) live in a later migration.
 outcomes, schema_version).
 
 Dialect-agnostic: all column types use SQLAlchemy generic types

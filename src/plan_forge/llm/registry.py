@@ -48,7 +48,7 @@ def build_active_list(
 
     Providers with auth_ok=False are excluded from the active list.
     Providers with auth_ok=True but tool_use_ok=False are included; callers
-    (T11+) may tag their evidence as UNCLASSIFIED.
+    may tag their evidence as UNCLASSIFIED.
 
     credentials: CredentialResolver (default: pass -> env chain)
     cache: CacheBackend (default: SqlAlchemyCacheBackend)

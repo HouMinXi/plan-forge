@@ -1,7 +1,5 @@
-"""Tests for llm/search_vote.py (Phase 4).
+"""Tests for llm/search_vote.py -- N-arity voting correctness."""
 
-All 7 mandated tests from SUBSPEC 7.2.
-"""
 from __future__ import annotations
 
 import warnings
