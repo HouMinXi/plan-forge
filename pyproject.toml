@@ -21,6 +21,15 @@ dependencies = [
     "markdown-it-py>=3.0",
 ]
 
+[project.optional-dependencies]
+postgres = [
+    "psycopg[binary]>=3.2",
+]
+dev = [
+    "testcontainers[postgres]>=4.0",
+    "pytest-asyncio>=0.23",
+]
+
 [project.scripts]
 plan-forge = "plan_forge.adapters.cli.main:main"
 
@@ -29,3 +38,9 @@ where = ["src"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+[tool.pytest.ini_options]
+markers = [
+    "live: real API calls; requires provider credentials",
+    "postgres: requires a running Postgres instance (set PLAN_FORGE_TEST_POSTGRES_URL)",
+]
