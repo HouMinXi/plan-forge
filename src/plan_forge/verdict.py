@@ -12,7 +12,7 @@ from enum import Enum
 class Severity(str, Enum):
     """Finding severity levels.
 
-    No INFO level -- PLAN spec lists only BLOCKER/HIGH/MEDIUM/LOW.
+    No INFO level -- only BLOCKER/HIGH/MEDIUM/LOW.
     """
     BLOCKER = "BLOCKER"
     HIGH = "HIGH"

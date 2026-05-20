@@ -86,7 +86,7 @@ class ParsedPlan:
 # ---------------------------------------------------------------------------
 
 # G4 hedge words (11-word canonical list).
-# PLAN spec: "maybe / likely / probably / perhaps / possibly / seems /
+# Canonical list: "maybe / likely / probably / perhaps / possibly / seems /
 #  appears / should / could / might / may"
 # Code regex MUST match this list exactly (P5 interface-symmetry rule).
 _HEDGE_RE = re.compile(
@@ -100,7 +100,7 @@ _SC_ROW_RE = re.compile(r'^SC-(\d+)([a-z]?)$', re.IGNORECASE)
 
 # Citation pattern for External Voices: Author(s) + year + title start.
 # Permissive: capture more than reject.
-# PLAN spec interpretation: the task-provided regex has a bug with
+# The original regex had a bug with
 # the optional paren group consuming the year paren.  Simplified to
 # match Author(s) (YYYY). Title or Author(s), YYYY. Title.
 _CITATION_RE = re.compile(
@@ -253,7 +253,7 @@ def _extract_sc_table(plan: ParsedPlan, lines: list[str]) -> None:
     Handles GFM-style pipe tables.  Extracts fail_condition when a column
     header contains "Fail Condition" (case-insensitive).
 
-    PLAN spec interpretation: SC number is the numeric portion; for SC-2a
+    SC number is the numeric portion; for SC-2a
     we store number=2, suffix="a", full_id="SC-2a".
     """
     in_table = False

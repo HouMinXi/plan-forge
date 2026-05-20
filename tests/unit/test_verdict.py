@@ -22,7 +22,7 @@ def test_severity_values():
 
 
 def test_severity_no_info():
-    """PLAN spec explicitly excludes INFO from Severity."""
+    """INFO is deliberately absent from Severity."""
     names = {s.name for s in Severity}
     assert "INFO" not in names
 
