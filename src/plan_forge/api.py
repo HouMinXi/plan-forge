@@ -1,12 +1,14 @@
-"""Public API: check_mechanical(), check(), and scaffold() stub."""
+"""Public API: check_mechanical(), check(), and scaffold()."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from .parser import parse
 from .checks import mechanical, epistemic
 from .llm.registry import build_active_list
 from .llm.client import LLMClient
+from .scaffold import render as _render_scaffold
 from .verdict import (
     Verdict,
     EngineeringVerdict,
@@ -168,9 +170,40 @@ def _compute_epistemic(findings: list[Finding]) -> EpistemicVerdict:
     return EpistemicVerdict.PASS
 
 
-def scaffold(name: str, output_dir: Path | None = None) -> Path:
-    """Generate a plan skeleton from the default template.
+_SAFE_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
 
-    Not yet implemented.
+
+def scaffold(name: str, output_dir: Path | None = None) -> Path:
+    """Generate a plan skeleton and write it to <output_dir>/<name>.md.
+
+    Args:
+        name: plan file base name (slug). Must match [A-Za-z0-9._-]+
+            and must not contain "..". Raises ValueError otherwise.
+        output_dir: directory to write into. Defaults to Path.cwd().
+            Raises FileNotFoundError if the directory does not exist
+            (never silently creates a directory tree).
+
+    Returns:
+        Absolute Path of the written .md file.
+
+    Raises:
+        ValueError: name is empty, starts with ".", contains "..", or has unsafe chars.
+        FileNotFoundError: output_dir does not exist or is not a directory.
+        FileExistsError: <output_dir>/<name>.md already exists.  The file
+            is created atomically via exclusive-create mode so concurrent
+            callers cannot silently overwrite each other.
     """
-    raise NotImplementedError
+    if not name or name.startswith(".") or ".." in name or not _SAFE_NAME.match(name):
+        raise ValueError(f"unsafe scaffold name: {name!r}")
+    target_dir = Path(output_dir) if output_dir is not None else Path.cwd()
+    if not target_dir.exists():
+        raise FileNotFoundError(f"output_dir does not exist: {target_dir}")
+    if not target_dir.is_dir():
+        raise FileNotFoundError(f"output_dir is not a directory: {target_dir}")
+    path = target_dir / f"{name}.md"
+    try:
+        with path.open("x", encoding="utf-8") as fh:
+            fh.write(_render_scaffold(name))
+    except FileExistsError:
+        raise FileExistsError(f"refusing to overwrite existing file: {path}") from None
+    return path.resolve()

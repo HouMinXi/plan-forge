@@ -1,8 +1,7 @@
 """Unit tests for api.check_mechanical() and _compute_engineering()."""
 import pathlib
-import pytest
 
-from plan_forge.api import check_mechanical, _compute_engineering, check, scaffold
+from plan_forge.api import check_mechanical, _compute_engineering, check
 from plan_forge.verdict import (
     Verdict,
     EngineeringVerdict,
@@ -196,7 +195,7 @@ def test_compute_engineering_rule():
 
 
 # ---------------------------------------------------------------------------
-# Verify check() and scaffold() stubs raise NotImplementedError
+# Verify check() and scaffold() are fully implemented (not stubs)
 # ---------------------------------------------------------------------------
 
 def test_check_returns_verdict():
@@ -212,7 +211,8 @@ def test_check_returns_verdict():
     )
 
 
-def test_scaffold_stub_raises():
-    """scaffold() is a not-yet-implemented stub; must raise NotImplementedError."""
-    with pytest.raises(NotImplementedError):
-        scaffold("my-plan")
+def test_scaffold_is_implemented(tmp_path):
+    """scaffold() is fully implemented; calling it must not raise."""
+    from plan_forge.api import scaffold as _scaffold
+    result = _scaffold("impl-check", tmp_path)
+    assert result.exists()
