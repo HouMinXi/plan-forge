@@ -1,4 +1,4 @@
-"""Public API: check_mechanical() now; check() and scaffold() in later tasks."""
+"""Public API: check_mechanical(), check(), and scaffold() stub."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -38,6 +38,10 @@ def check_mechanical(
     parsed = parse(plan_text)
     findings = mechanical.run(parsed, preamble=preamble)
     engineering = _compute_engineering(findings)
+    # Epistemic is hardcoded VISION: mechanical-only mode
+    # makes no epistemic assessment; VISION signals "no G-gate ran".
+    # Do NOT replace with _compute_epistemic() here -- that would break
+    # the intentional separation between mechanical and epistemic layers.
     return Verdict(
         engineering=engineering,
         epistemic=EpistemicVerdict.VISION,
@@ -64,9 +68,9 @@ def _bootstrap_llm_clients() -> list[LLMClient]:
     Returns all clients whose credentials resolve (may be empty if no
     env vars are set).  Silently skips providers with missing credentials.
     """
-    # SUBSPEC interpretation: get_all_clients() was the original name in
-    # the spec, but the registry exposes build_active_list() which performs
-    # the same credential resolution + health check filtering.
+    # SUBSPEC interpretation: spec names get_all_clients(); the registry
+    # exposes build_active_list() which performs the same credential resolution
+    # and active-provider filtering.  build_active_list() is the correct symbol.
     return build_active_list()
 
 
@@ -89,12 +93,18 @@ def check(
 
     Returns:
         Verdict with engineering (PASS/FAIL), epistemic (PASS/FAIL/VISION),
-        and combined findings from all three layers.
+        and combined findings from all three layers.  The two dimensions
+        are computed independently: a plan whose only serious findings are
+        on vision gates (G1/G2/G3/G5/G7) will produce engineering=FAIL
+        (any BLOCKER/HIGH fails engineering) and epistemic=VISION (no
+        non-vision serious finding fires the FAIL trigger).  A plan with
+        non-vision-gate BLOCKERs (e.g. G4 aggregate, G8 absent section,
+        F1 orphan SC) produces engineering=FAIL and epistemic=FAIL.
     """
     parsed = parse(plan_text)
     findings: list[Finding] = []
 
-    # Layer 1: mechanical F1-F7 (includes PBR via mechanical.run)
+    # Layer 1: mechanical F1-F7 + PBR P1/P2/P5 (PBR delegated inside mechanical.run)
     findings.extend(mechanical.run(parsed, preamble=preamble))
 
     # Layer 2: epistemic G1-G8
@@ -105,7 +115,7 @@ def check(
     findings.extend(epistemic.run(parsed, llm_clients))
 
     engineering = _compute_engineering(findings)
-    epistemic_verdict = _compute_epistemic(findings, engineering)
+    epistemic_verdict = _compute_epistemic(findings)
     return Verdict(
         engineering=engineering,
         epistemic=epistemic_verdict,
@@ -114,49 +124,43 @@ def check(
     )
 
 
-def _compute_epistemic(
-    findings: list[Finding],
-    engineering: EngineeringVerdict,
-) -> EpistemicVerdict:
-    """Compute epistemic verdict from findings + engineering verdict.
+def _compute_epistemic(findings: list[Finding]) -> EpistemicVerdict:
+    """Compute epistemic verdict from findings alone.
 
-    Decision rules per PLAN lines 383-422:
-    - VISION if any G1/G2/G3/G5/G7 mechanical BLOCKER (plan-level
-      structure absent).
-    - FAIL if engineering == FAIL OR any G4/G6/G8 aggregate BLOCKER.
-    - PASS otherwise.
-    - Precedence: FAIL > VISION > PASS.
+    Serious (BLOCKER/HIGH) findings are partitioned by check_id prefix:
+    - Vision gates G1/G2/G3/G5/G7 (section absent or partial-field HIGH)
+      yield a VISION trigger.
+    - All other gates (F*, P*, G4.*mechanical, G4.*aggregate, G6.*,
+      G8.*) yield a FAIL trigger.
+    Precedence: FAIL > VISION > PASS.
+    The engineering verdict is deliberately not consulted: if it were,
+    engineering FAIL (which fires on any BLOCKER/HIGH, vision gates
+    included) would make VISION unreachable via the FAIL > VISION rule.
     """
-    # SUBSPEC interpretation: G1/G2/G3/G5/G7 mechanical BLOCKERs are the
-    # "plan-level structure absent" findings.  Heuristic: check_id starts
-    # with one of the vision-gate prefixes AND severity is BLOCKER.
-    # This matches check_ids like G1.no_section, G2.missing_gray_rhino,
-    # G3.insufficient_causes, G5.insufficient_scenarios, G5.all_break,
-    # G7.no_section, G7.missing_*.
+    # G4/G6/G8 are epistemic quality gates (FAIL triggers), not structural
+    # absences, so they are intentionally excluded from this tuple.
+    # (G4 has no LLM Part B; G6 and G8 each have Part A mechanical + Part B LLM.)
+    # INVARIANT: this partition relies on each gate's check_ids starting with
+    # its own Gx. prefix (e.g. G4.A.aggregate, G6.B.llm). A gate emitting a
+    # check_id with a different gate's prefix would silently misroute findings.
+    # The test test_check_id_prefix_invariant enforces this invariant.
     vision_gate_prefixes = ("G1.", "G2.", "G3.", "G5.", "G7.")
+    # HIGH is included because vision gates emit partial-field findings at HIGH
+    # (e.g. G2.gray_rhino_no_denial, G2.black_swan_no_survival,
+    #  G3.no_early_warning, G7.missing_barbell).
+    # Both BLOCKER (section absent) and HIGH (partial-field) on vision gates
+    # are VISION triggers.
+    serious = (Severity.BLOCKER, Severity.HIGH)
+    has_fail_trigger = any(
+        f.severity in serious
+        and not f.check_id.startswith(vision_gate_prefixes)
+        for f in findings
+    )
     has_vision_trigger = any(
-        f.check_id.startswith(vision_gate_prefixes)
-        and f.severity == Severity.BLOCKER
+        f.severity in serious
+        and f.check_id.startswith(vision_gate_prefixes)
         for f in findings
     )
-
-    # SUBSPEC interpretation: G4/G6/G8 aggregate BLOCKERs have check_id
-    # containing "aggregate" OR starting with one of the fail-gate prefixes
-    # AND severity BLOCKER.  This covers G4.A.aggregate, G6.A.mechanical,
-    # G6.B.aggregate, G8.A.no_section, G8.B.llm.
-    # Warning: "aggregate" is a substring match; if a future non-G4/G6/G8
-    # check_id contains "aggregate", revisit this heuristic.
-    fail_gate_prefixes = ("G4.", "G6.", "G8.")
-    has_fail_trigger = engineering == EngineeringVerdict.FAIL or any(
-        (
-            f.check_id.startswith(fail_gate_prefixes)
-            or "aggregate" in f.check_id
-        )
-        and f.severity == Severity.BLOCKER
-        for f in findings
-    )
-
-    # Precedence: FAIL > VISION > PASS (PLAN line 420).
     if has_fail_trigger:
         return EpistemicVerdict.FAIL
     if has_vision_trigger:

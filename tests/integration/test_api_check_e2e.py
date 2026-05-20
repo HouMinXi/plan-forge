@@ -55,10 +55,9 @@ def _mock_client(name: str, verdict: str) -> MockClient:
 def test_check_well_formed_plan_pass():
     """End-to-end: well_formed.md passes all gates -> engineering PASS / epistemic PASS.
 
-    MockClients vote VERIFIED for G6 SC falsifiability and
-    RESOLVED_BY_KNOWLEDGE is not a G8 verdict; G8 Part B uses citation
-    resolvability prompts which receive VERIFIED from the mock.
-    Findings may exist at MEDIUM/LOW but no BLOCKER/HIGH.
+    MockClients vote VERIFIED for all LLM checks (G6 SC falsifiability
+    and G8 citation resolvability).  Findings may exist at MEDIUM/LOW
+    but no BLOCKER/HIGH is allowed on the golden-path fixture.
     """
     plan_text = _load("well_formed.md")
 
@@ -83,71 +82,21 @@ def test_check_well_formed_plan_pass():
 
 
 # ---------------------------------------------------------------------------
-# Test 2: vision plan (missing G1/G3/G7 sections) -> epistemic VISION
+# Test 2: vision plan (missing G1/G7 sections) -> epistemic VISION
 # ---------------------------------------------------------------------------
 
 def test_check_vision_plan():
-    """A plan missing G1/G3/G7 sections -> epistemic VISION.
+    """A plan missing Reference Class and Scope Challenge -> epistemic VISION.
 
-    The fail_missing_premortem fixture has no Pre-mortem, so G3.no_section
-    (BLOCKER) fires.  With engineering PASS (if no F/PBR BLOCKER/HIGH) and
-    a vision trigger present but no fail trigger, epistemic is VISION.
-    With llm_clients=[], G8 still runs mechanically: G8.A.no_section fires
-    (BLOCKER) if External Voices is absent, which triggers FAIL.
-    Use a plan that has External Voices but lacks Pre-mortem and Reference
-    Class and Scope Challenge (G3/G1/G7 absent -> VISION triggers only if
-    no G8 BLOCKER fires).
-
-    Simplest approach: use g1_fail.md which has no Reference Class section
-    (G1.no_section BLOCKER) and also has External Voices (no G8 BLOCKER).
-    Because g1_fail only has Reference Class absent, G8 and others fire
-    if their sections are also absent. Use a custom inline plan to control
-    exactly which sections are present.
+    G1.no_section and G7.no_section are BLOCKER findings on vision gates.
+    External Voices is present (no G8.A.no_section), so no non-vision
+    serious findings exist. Only vision-gate BLOCKERs fire, which
+    resolve to VISION under the partition rule.
     """
-    # Plan has G1/G7 absent (VISION triggers) but External Voices present
-    # (no G8.A.no_section FAIL trigger) and no F/PBR BLOCKER/HIGH.
-    vision_plan = (
-        "# Vision Plan\n\n"
-        "## Overview\n\n"
-        "A plan about software.\n\n"
-        "## Risks\n\n"
-        "### Known Risks\n\n"
-        "| Risk | Probability | Impact | Mitigation |\n"
-        "|------|-------------|--------|------------|\n"
-        "| schedule slip | 50% | High | weekly review |\n\n"
-        "### Gray Rhinos\n\n"
-        "| Gray Rhino | Denial Reason | Counter |\n"
-        "|------------|---------------|---------|\n"
-        "| scope creep | Feels productive | weekly freeze |\n\n"
-        "### Black Swans\n\n"
-        "| Black Swan | Survival Plan |\n"
-        "|------------|---------------|\n"
-        "| key dep deprecated | fork internally |\n\n"
-        "## Pre-mortem\n\n"
-        "1. Ran out of time. early_warning: milestones missed. counter: re-scope.\n"
-        "2. API design breaks downstream. early_warning: complaints. counter: versioned API.\n"
-        "3. Tests too slow. early_warning: CI over 10 minutes. counter: parallelize.\n"
-        "4. Docs not maintained. early_warning: undocumented APIs. counter: doc linter.\n"
-        "5. Upstream breaks. early_warning: release notes. counter: pin version.\n\n"
-        "## Chaos Response\n\n"
-        "1. CI goes down -- the system will survive with local runs.\n"
-        "2. Key engineer unavailable -- throughput will degrade but core is protected.\n"
-        "3. Upstream API redesign -- the team will survive by pinning versions.\n\n"
-        "## External Voices\n\n"
-        "- Flyvbjerg (2006). From Nobel Prize to project management.\n\n"
-        "However, critics argue that forecasting anchors too conservatively.\n\n"
-        "The 2013 Healthcare.gov failure demonstrated integration testing gaps.\n"
-    )
-    # G1.no_section -> VISION trigger (Reference Class absent)
-    # G7.no_section -> VISION trigger (Scope Challenge absent)
-    # G8.A present (External Voices present, has citation, dissent, failure case)
-    # Engineering: G1.no_section BLOCKER -> FAIL
-    # Epistemic: FAIL (engineering FAIL) with VISION also present; FAIL wins.
+    vision_plan = _load("vision_plan.md")
     verdict = check(vision_plan, llm_clients=[])
 
-    # Both VISION and FAIL triggers present; FAIL takes precedence over VISION
-    assert verdict.epistemic == EpistemicVerdict.FAIL
-    # Confirm at least one G1/G7 BLOCKER is present (the vision trigger source)
+    assert verdict.epistemic == EpistemicVerdict.VISION
     vision_blockers = [
         f for f in verdict.findings
         if f.check_id.startswith(("G1.", "G7."))
@@ -161,15 +110,17 @@ def test_check_vision_plan():
 # ---------------------------------------------------------------------------
 
 def test_check_fail_plan():
-    """A plan with an F1 orphan SC (HIGH, not BLOCKER) + G1 absent (BLOCKER).
+    """f1_fail.md: orphan SC (F1.orphan_sc HIGH) + no External Voices.
 
-    F1 orphan_sc is HIGH severity.  G1.no_section is BLOCKER.  Both trigger
-    engineering FAIL.  G1.no_section also triggers VISION, but FAIL wins.
+    F1.orphan_sc is HIGH severity and non-vision -> FAIL trigger.
+    G8.A.no_section is BLOCKER (no External Voices section) and
+    non-vision -> FAIL trigger.  G1/G3/G5/G7 absences are vision
+    triggers; FAIL > VISION, so epistemic resolves to FAIL.
     """
     fail_plan = _load("f1_fail.md")
     verdict = check(fail_plan, llm_clients=[])
 
     assert verdict.engineering == EngineeringVerdict.FAIL
-    # G1.no_section BLOCKER is present (f1_fail has no Reference Class)
-    # -> FAIL trigger fires -> epistemic FAIL
+    # FAIL trigger: F1.orphan_sc (HIGH) + G8.A.no_section (BLOCKER);
+    # VISION triggers also fire (G1/G3/G5/G7 absent) but FAIL wins.
     assert verdict.epistemic == EpistemicVerdict.FAIL

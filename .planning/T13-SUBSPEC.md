@@ -79,41 +79,34 @@ list (no credentials), that is fine -- G4/G6/G8 Part B will skip
 
 ### 1.3 Verdict decision rules (PLAN lines 383-422)
 
-**Epistemic verdict** (computed AFTER engineering, uses both
-findings + engineering verdict):
+**Epistemic verdict** (computed from findings alone; does NOT key
+off the engineering verdict):
 
-1. **VISION** if any G1/G2/G3/G5/G7 mechanical BLOCKER is present
-   (lines 383-395).  These are the "plan-level structure absent"
-   BLOCKERs (e.g., G1.no_section, G2.missing_gray_rhino,
-   G3.insufficient_causes, G5.all_break, G7.no_section).  A plan
-   missing these sections is by construction a vision.
-   
-   SUBSPEC interpretation: check `check_id` prefix.  G1/G2/G3/G5/G7
-   BLOCKERs have check_ids like `G1.no_section`,
-   `G2.missing_gray_rhino`, `G3.insufficient_causes`,
-   `G5.insufficient_scenarios`, `G5.all_break`, `G7.no_section`,
-   `G7.missing_*`.  The pattern: starts with `G[12357].` AND
-   severity is BLOCKER.  Document this heuristic with a
-   `# SUBSPEC interpretation:` comment.
+Serious findings (BLOCKER or HIGH) are partitioned by check_id
+prefix into two buckets:
 
-2. **FAIL** if `engineering == FAIL` (line 402: "any BLOCKER or HIGH
-   from F1-F7 or PBR" already computed by `_compute_engineering`).
-   FAIL takes precedence over VISION (line 420).
+- **Vision gates** G1/G2/G3/G5/G7: structural absence of a plan
+  section.  A plan missing these sections is by construction a
+  vision document.  Both BLOCKER (section absent) and HIGH
+  (partial-field missing, e.g. G7.missing_barbell, G2.gray_rhino_no_denial)
+  are vision triggers.
 
-3. **FAIL** if any G4/G6/G8 aggregate BLOCKER is present (lines
-   404-416).  These are the epistemic-layer aggregate failures:
-   `G4.A.aggregate` (>10 hedges), `G6.A.mechanical` (>30% SCs no
-   fail_condition), `G6.B.aggregate` (>30% UNVERIFIED),
-   `G8.A.no_section`, `G8.B.llm` (fabricated citation).  Pattern:
-   check_id contains `aggregate` OR starts with `G[468].` AND
-   severity BLOCKER.
+- **All other gates** (F*, P*, G4/G6/G8): non-vision serious
+  findings.  These are FAIL triggers.
 
-4. **PASS** otherwise (line 418).
+Decision rules:
+1. **FAIL** if any non-vision serious finding exists.
+2. **VISION** else if any vision-gate serious finding exists.
+3. **PASS** otherwise.
 
-Precedence: FAIL > VISION > PASS (line 420).  Implementation: check
-VISION conditions first; if none match, check FAIL conditions; if
-none match, PASS.  Then apply precedence (if both VISION and FAIL
-are true, return FAIL).
+Precedence FAIL > VISION > PASS is inherent in the evaluation order.
+
+Note: an earlier revision keyed the FAIL trigger off
+`engineering == FAIL`, which fires on any BLOCKER/HIGH including
+vision-gate findings.  That made VISION mathematically unreachable
+because every vision trigger is itself a BLOCKER/HIGH that flips
+engineering to FAIL.  The partition rule above fixes this by
+separating the two concerns.
 
 ### 1.4 Three-layer aggregation order
 
@@ -133,7 +126,7 @@ if llm_clients is None:
 findings.extend(epistemic.run(parsed, llm_clients))
 
 engineering = _compute_engineering(findings)
-epistemic_verdict = _compute_epistemic(findings, engineering)
+epistemic_verdict = _compute_epistemic(findings)
 return Verdict(engineering=engineering, epistemic=epistemic_verdict,
                findings=findings)
 ```
@@ -165,43 +158,28 @@ from .llm.registry import get_all_clients
 ### 3.2 Implement _compute_epistemic()
 
 ```python
-def _compute_epistemic(
-    findings: list[Finding],
-    engineering: EngineeringVerdict,
-) -> EpistemicVerdict:
-    """Compute epistemic verdict from findings + engineering verdict.
-    
-    Decision rules per PLAN lines 383-422:
-    - VISION if any G1/G2/G3/G5/G7 mechanical BLOCKER (plan-level
-      structure absent).
-    - FAIL if engineering == FAIL OR any G4/G6/G8 aggregate BLOCKER.
-    - PASS otherwise.
-    - Precedence: FAIL > VISION > PASS.
+def _compute_epistemic(findings: list[Finding]) -> EpistemicVerdict:
+    """Compute epistemic verdict from findings alone (PLAN 383-422).
+
+    Serious (BLOCKER/HIGH) findings are partitioned by gate prefix:
+    vision gates G1/G2/G3/G5/G7 yield a VISION trigger; all other gates
+    (F*, P*, G4/G6/G8) yield a FAIL trigger. Precedence FAIL > VISION >
+    PASS. This deliberately does NOT key off the engineering verdict:
+    engineering FAIL fires on any BLOCKER/HIGH including vision gates,
+    which would make VISION unreachable.
     """
-    # SUBSPEC interpretation: G1/G2/G3/G5/G7 mechanical BLOCKERs are
-    # the "plan-level structure absent" findings.  Heuristic: check_id
-    # starts with G[12357]. AND severity is BLOCKER.
     vision_gate_prefixes = ("G1.", "G2.", "G3.", "G5.", "G7.")
-    has_vision_trigger = any(
-        f.check_id.startswith(vision_gate_prefixes)
-        and f.severity == Severity.BLOCKER
+    serious = (Severity.BLOCKER, Severity.HIGH)
+    has_fail_trigger = any(
+        f.severity in serious
+        and not f.check_id.startswith(vision_gate_prefixes)
         for f in findings
     )
-    
-    # FAIL conditions: engineering FAIL OR G4/G6/G8 aggregate BLOCKER.
-    # G4/G6/G8 aggregate BLOCKERs have check_id containing "aggregate"
-    # OR starting with G[468]. AND severity BLOCKER.
-    fail_gate_prefixes = ("G4.", "G6.", "G8.")
-    has_fail_trigger = (
-        engineering == EngineeringVerdict.FAIL
-        or any(
-            (f.check_id.startswith(fail_gate_prefixes) or "aggregate" in f.check_id)
-            and f.severity == Severity.BLOCKER
-            for f in findings
-        )
+    has_vision_trigger = any(
+        f.severity in serious
+        and f.check_id.startswith(vision_gate_prefixes)
+        for f in findings
     )
-    
-    # Precedence: FAIL > VISION > PASS
     if has_fail_trigger:
         return EpistemicVerdict.FAIL
     if has_vision_trigger:
@@ -212,27 +190,21 @@ def _compute_epistemic(
 ### 3.3 Phase 2 tests (tests/unit/test_api_check.py)
 
 - `test_check_mechanical_only_mode`: call `check(plan, llm_clients=[])`
-  (empty list, not None); assert epistemic is VISION (G gates skipped,
-  so no G1-G7 structure -> VISION by default when no LLM findings).
-  
-  SUBSPEC interpretation: when `llm_clients=[]`, G4/G6/G8 Part B
-  skips (no_providers path), so no G4/G6/G8 findings.  G1/G2/G3/G5/G7
-  still run (they are mechanical).  If the plan lacks G1-G7 structure,
-  VISION triggers; if it has structure, epistemic is PASS (no FAIL
-  from G4/G6/G8 because they didn't run).  The test uses a minimal
-  plan (no G1-G7 sections) -> VISION.
+  (empty list, not None).  A minimal plan has G1-G7 absent (vision
+  triggers) AND G8.A.no_section (non-vision BLOCKER = FAIL trigger).
+  FAIL > VISION, so epistemic is FAIL.  Engineering is also FAIL.
 
 - `test_check_bootstrap_llm_clients_none`: call `check(plan,
-  llm_clients=None)` (default); mock `get_all_clients` to return
+  llm_clients=None)` (default); mock `build_active_list` to return
   `[]`; assert no crash, epistemic computed.
 
 - `test_compute_epistemic_vision_trigger`: build findings with a
-  G1.no_section BLOCKER; assert `_compute_epistemic(findings,
-  EngineeringVerdict.PASS) == EpistemicVerdict.VISION`.
+  G1.no_section BLOCKER; assert `_compute_epistemic(findings)
+  == EpistemicVerdict.VISION`.
 
 - `test_compute_epistemic_fail_precedence`: build findings with both
-  a G1.no_section BLOCKER (VISION trigger) and engineering=FAIL;
-  assert epistemic is FAIL (precedence).
+  a G1.no_section BLOCKER (VISION trigger) and an F1.orphan_sc HIGH
+  (non-vision FAIL trigger); assert epistemic is FAIL (precedence).
 
 - `test_compute_epistemic_g6_aggregate_fail`: build findings with
   G6.B.aggregate BLOCKER; assert FAIL.
@@ -304,8 +276,8 @@ def test_check_well_formed_plan_pass():
 ```
 
 Additional integration tests:
-- `test_check_vision_plan`: a plan missing G1/G3/G7 sections ->
-  epistemic VISION.
+- `test_check_vision_plan`: a plan missing G1/G7 sections (G3 satisfied
+  by Pre-mortem) -> epistemic VISION.
 - `test_check_fail_plan`: a plan with F1 orphan SC (BLOCKER) ->
   engineering FAIL, epistemic FAIL (precedence).
 
