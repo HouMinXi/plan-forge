@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 import openai
 
 from plan_forge.llm.cache import SqlAlchemyCacheBackend
-from plan_forge.llm.client import HealthStatus, LLMResponse
+from plan_forge.llm.client import HealthStatus, LLMResponse, parse_verdict_response
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import DEEPSEEK_WEB_SEARCH_TOOL
 
@@ -128,9 +128,12 @@ class DeepSeekClient:
                 raise RuntimeError(f"deepseek call failed: {exc}") from exc
 
         choice = raw.choices[0] if raw.choices else None
-        verdict = ""
+        raw_text = ""
         if choice and choice.message and choice.message.content:
-            verdict = choice.message.content
+            raw_text = choice.message.content
+
+        verdict, reasoning, cited_instances, search_evidence = \
+            parse_verdict_response(raw_text)
 
         cost = 0.0
         if hasattr(raw, "usage") and raw.usage:
@@ -140,9 +143,9 @@ class DeepSeekClient:
 
         resp = LLMResponse(
             verdict=verdict,
-            reasoning="",
-            cited_instances=[],
-            search_evidence=[],
+            reasoning=reasoning,
+            cited_instances=cited_instances,
+            search_evidence=search_evidence,
             cost_usd=cost,
             raw_response=raw.model_dump() if hasattr(raw, "model_dump") else {},
         )

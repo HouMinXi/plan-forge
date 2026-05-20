@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 import anthropic
 
 from plan_forge.llm.cache import SqlAlchemyCacheBackend
-from plan_forge.llm.client import HealthStatus, LLMResponse
+from plan_forge.llm.client import HealthStatus, LLMResponse, parse_verdict_response
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import ANTHROPIC_WEB_SEARCH_TOOL
 
@@ -110,16 +110,20 @@ class AnthropicClient:
         except Exception as exc:
             raise RuntimeError(f"anthropic call failed: {exc}") from exc
 
-        verdict = ""
-        reasoning = ""
-        search_evidence: list[dict] = []
+        raw_text = ""
+        web_search_evidence: list[dict] = []
         for block in raw.content:
             if hasattr(block, "text"):
-                verdict = block.text
+                raw_text = block.text
             elif hasattr(block, "type") and block.type == "web_search_result":
-                search_evidence.append(
+                web_search_evidence.append(
                     {"url": getattr(block, "url", ""), "text": getattr(block, "encrypted_content", "")}
                 )
+
+        verdict, reasoning, cited_instances, search_evidence = \
+            parse_verdict_response(raw_text)
+        # Merge any web_search_result blocks from Anthropic's built-in search
+        search_evidence = search_evidence or web_search_evidence
 
         cost = 0.0
         if hasattr(raw, "usage"):
@@ -128,7 +132,7 @@ class AnthropicClient:
         resp = LLMResponse(
             verdict=verdict,
             reasoning=reasoning,
-            cited_instances=[],
+            cited_instances=cited_instances,
             search_evidence=search_evidence,
             cost_usd=cost,
             raw_response=raw.model_dump() if hasattr(raw, "model_dump") else {},

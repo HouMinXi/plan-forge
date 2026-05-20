@@ -87,6 +87,56 @@ class TestAnthropicCallCaches:
             assert r2.verdict == "PASS"
 
 
+class TestAnthropicJsonParse:
+    """Verify parse_verdict_response is applied in call()."""
+
+    def test_call_parses_json_verdict(self):
+        json_body = '{"verdict": "VERIFIED", "reason": "ok", "cited_instances": [], "search_evidence": []}'
+        raw = _stub_messages_response(json_body)
+        with patch("plan_forge.llm.anthropic_client.anthropic.Anthropic") as mock_cls:
+            sdk = MagicMock()
+            mock_cls.return_value = sdk
+            sdk.messages.create.return_value = raw
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = AnthropicClient(api_key="fake")
+            c._cache = cache
+            resp = c.call("prompt", cache_key_inputs={"t": "1"})
+            assert resp.verdict == "VERIFIED"
+            assert resp.reasoning == "ok"
+
+    def test_call_non_json_fallback(self):
+        raw = _stub_messages_response("hello")
+        with patch("plan_forge.llm.anthropic_client.anthropic.Anthropic") as mock_cls:
+            sdk = MagicMock()
+            mock_cls.return_value = sdk
+            sdk.messages.create.return_value = raw
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = AnthropicClient(api_key="fake")
+            c._cache = cache
+            resp = c.call("prompt", cache_key_inputs={"t": "2"})
+            assert resp.verdict == "hello"
+
+    def test_call_markdown_fenced_json(self):
+        fenced = '```json\n{"verdict":"UNVERIFIED","reason":"bad","cited_instances":[],"search_evidence":[]}\n```'
+        raw = _stub_messages_response(fenced)
+        with patch("plan_forge.llm.anthropic_client.anthropic.Anthropic") as mock_cls:
+            sdk = MagicMock()
+            mock_cls.return_value = sdk
+            sdk.messages.create.return_value = raw
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = AnthropicClient(api_key="fake")
+            c._cache = cache
+            resp = c.call("prompt", cache_key_inputs={"t": "3"})
+            assert resp.verdict == "UNVERIFIED"
+            assert resp.reasoning == "bad"
+
+
 @pytest.mark.live
 def test_anthropic_call_live():
     """Smoke test: real Anthropic call.  Skipped without credentials."""

@@ -3,9 +3,9 @@
 Uses an Anthropic-compatible endpoint:
   https://token-plan-cn.xiaomimimo.com/anthropic
 
-Tool_use support is unconfirmed at spec time.  health_check probes;
-if tool_use_ok=False, all Mimo evidence is tagged UNCLASSIFIED by
-all Mimo evidence is tagged UNCLASSIFIED (no_search_judgment fallback).
+Tool_use support is unconfirmed.  health_check probes at startup;
+if tool_use_ok=False, all Mimo evidence is tagged UNCLASSIFIED
+(no_search_judgment fallback).
 
 Credential path (pass): api/mimo
 Env fallback: PLAN_FORGE_MIMO_API_KEY
@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 import anthropic
 
 from plan_forge.llm.cache import SqlAlchemyCacheBackend
-from plan_forge.llm.client import HealthStatus, LLMResponse
+from plan_forge.llm.client import HealthStatus, LLMResponse, parse_verdict_response
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import MIMO_WEB_SEARCH_TOOL
 
@@ -130,11 +130,14 @@ class MimoClient:
         except Exception as exc:
             raise RuntimeError(f"mimo call failed: {exc}") from exc
 
-        verdict = ""
+        raw_text = ""
         for block in raw.content:
             if hasattr(block, "text"):
-                verdict = block.text
+                raw_text = block.text
                 break
+
+        verdict, reasoning, cited_instances, search_evidence = \
+            parse_verdict_response(raw_text)
 
         cost = 0.0
         if hasattr(raw, "usage"):
@@ -142,9 +145,9 @@ class MimoClient:
 
         resp = LLMResponse(
             verdict=verdict,
-            reasoning="",
-            cited_instances=[],
-            search_evidence=[],
+            reasoning=reasoning,
+            cited_instances=cited_instances,
+            search_evidence=search_evidence,
             cost_usd=cost,
             raw_response=raw.model_dump() if hasattr(raw, "model_dump") else {},
         )

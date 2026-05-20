@@ -79,6 +79,56 @@ class TestDeepSeekCallCaches:
             assert r2.verdict == "PASS"
 
 
+class TestDeepSeekJsonParse:
+    """Verify parse_verdict_response is applied in call()."""
+
+    def test_call_parses_json_verdict(self):
+        json_body = '{"verdict": "VERIFIED", "reason": "ok", "cited_instances": [], "search_evidence": []}'
+        raw = _stub_choice(json_body)
+        with patch("plan_forge.llm.deepseek_client.openai.OpenAI") as mock_cls:
+            sdk = MagicMock()
+            mock_cls.return_value = sdk
+            sdk.chat.completions.create.return_value = raw
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = DeepSeekClient(api_key="fake")
+            c._cache = cache
+            resp = c.call("prompt", cache_key_inputs={"t": "1"})
+            assert resp.verdict == "VERIFIED"
+            assert resp.reasoning == "ok"
+
+    def test_call_non_json_fallback(self):
+        raw = _stub_choice("hello")
+        with patch("plan_forge.llm.deepseek_client.openai.OpenAI") as mock_cls:
+            sdk = MagicMock()
+            mock_cls.return_value = sdk
+            sdk.chat.completions.create.return_value = raw
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = DeepSeekClient(api_key="fake")
+            c._cache = cache
+            resp = c.call("prompt", cache_key_inputs={"t": "2"})
+            assert resp.verdict == "hello"
+
+    def test_call_markdown_fenced_json(self):
+        fenced = '```json\n{"verdict":"UNVERIFIED","reason":"bad","cited_instances":[],"search_evidence":[]}\n```'
+        raw = _stub_choice(fenced)
+        with patch("plan_forge.llm.deepseek_client.openai.OpenAI") as mock_cls:
+            sdk = MagicMock()
+            mock_cls.return_value = sdk
+            sdk.chat.completions.create.return_value = raw
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = DeepSeekClient(api_key="fake")
+            c._cache = cache
+            resp = c.call("prompt", cache_key_inputs={"t": "3"})
+            assert resp.verdict == "UNVERIFIED"
+            assert resp.reasoning == "bad"
+
+
 @pytest.mark.live
 def test_deepseek_call_live():
     import os

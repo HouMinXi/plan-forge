@@ -7,6 +7,7 @@ tool_use schema version forms the SHA-256 cache key.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Protocol, runtime_checkable
@@ -30,6 +31,33 @@ class LLMResponse:
     search_evidence: list[dict] = field(default_factory=list)
     cost_usd: float = 0.0
     raw_response: dict = field(default_factory=dict)  # provider native, for debug
+
+
+def parse_verdict_response(raw_text: str) -> tuple[str, str, list, list]:
+    """Parse the unified JSON verdict convention from LLM output.
+
+    Returns (verdict, reasoning, cited_instances, search_evidence).
+    Falls back to (raw_text, "", [], []) if the text is not the
+    expected JSON object (back-compat for non-judge prompts).
+    """
+    text = raw_text.strip()
+    # Strip a markdown code fence if the model wrapped its JSON.
+    if text.startswith("```"):
+        lines = [ln for ln in text.split("\n")
+                 if not ln.strip().startswith("```")]
+        text = "\n".join(lines).strip()
+    try:
+        data = json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return raw_text, "", [], []
+    if not isinstance(data, dict) or "verdict" not in data:
+        return raw_text, "", [], []
+    return (
+        str(data["verdict"]),
+        str(data.get("reason", "")),
+        list(data.get("cited_instances") or []),
+        list(data.get("search_evidence") or []),
+    )
 
 
 @runtime_checkable
