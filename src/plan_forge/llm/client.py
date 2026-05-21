@@ -7,6 +7,7 @@ tool_use schema version forms the SHA-256 cache key.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -58,6 +59,20 @@ def parse_verdict_response(raw_text: str) -> tuple[str, str, list, list]:
         list(data.get("cited_instances") or []),
         list(data.get("search_evidence") or []),
     )
+
+
+def cache_key(cache_key_inputs: dict, provider: str, model: str,
+              tool_schema: dict | None) -> str:
+    """Return a 64-char SHA-256 hex cache key for an LLM call.
+
+    Shared by all provider clients so the key algorithm has one source
+    of truth.  Stable JSON serialization (sort_keys) of the inputs is
+    combined with provider, model, and tool schema.
+    """
+    parts = json.dumps(cache_key_inputs, sort_keys=True)
+    parts += provider + model
+    parts += json.dumps(tool_schema, sort_keys=True) if tool_schema else "null"
+    return hashlib.sha256(parts.encode()).hexdigest()
 
 
 @runtime_checkable

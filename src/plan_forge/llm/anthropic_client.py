@@ -11,25 +11,19 @@ a single-message call with the web_search tool to verify acceptance.
 """
 from __future__ import annotations
 
-import hashlib
-import json
 from datetime import datetime, timezone
 
 import anthropic
 
 from plan_forge.llm.cache import SqlAlchemyCacheBackend
-from plan_forge.llm.client import HealthStatus, LLMResponse, parse_verdict_response
+from plan_forge.llm.client import (
+    HealthStatus,
+    LLMResponse,
+    cache_key,
+    parse_verdict_response,
+)
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import ANTHROPIC_WEB_SEARCH_TOOL
-
-
-def _cache_key(cache_key_inputs: dict, provider: str, model: str,
-               tool_schema: dict | None) -> str:
-    """Return a 64-char SHA-256 hex cache key."""
-    parts = json.dumps(cache_key_inputs, sort_keys=True)
-    parts += provider + model
-    parts += json.dumps(tool_schema, sort_keys=True) if tool_schema else "null"
-    return hashlib.sha256(parts.encode()).hexdigest()
 
 
 @register("anthropic")
@@ -86,7 +80,7 @@ class AnthropicClient:
         tool_use_schema: dict | None = None,
         cache_key_inputs: dict,
     ) -> LLMResponse:
-        key = _cache_key(cache_key_inputs, self.name, self.model, tool_use_schema)
+        key = cache_key(cache_key_inputs, self.name, self.model, tool_use_schema)
         cached = self._cache.get(key)
         if cached is not None:
             return LLMResponse(**cached)

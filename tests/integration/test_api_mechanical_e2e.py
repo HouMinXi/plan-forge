@@ -63,11 +63,12 @@ def test_api_mechanical_on_pass_well_formed():
     Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
 
     engineering = FAIL
-      Reason: F2.duplicate_fact and P1.orphan_identifier are HIGH-severity.
-      F2 fires because the well-formed fixture reuses common phrases across
-      sections (e.g. the Reference Class table values appear in multiple
-      rows).  P1 fires because section headings used as identifiers are not
-      referenced elsewhere in the plan body.  Both are HIGH.
+      Reason: F3.unverified_cross_plan_ref (HIGH) and P1.orphan_identifier
+      (HIGH) drive the FAIL.  F2.duplicate_fact also fires (the well-formed
+      fixture reuses common phrases across sections, e.g. the Reference
+      Class table values appear in multiple rows) but F2 is LOW and does not
+      affect the engineering verdict.  P1 fires because section headings used
+      as identifiers are not referenced elsewhere in the plan body.
 
     total findings = 26
       Breakdown: F2 x 20, F3 x 1, P1 x 5.
@@ -86,7 +87,7 @@ def test_api_mechanical_on_pass_well_formed():
     # Snapshot: engineering verdict
     assert result.engineering == EngineeringVerdict.FAIL, (
         f"{fixture}: engineering snapshot mismatch. "
-        "If F2/P1 severity changed, update this snapshot with justification."
+        "If F3/P1 severity changed, update this snapshot with justification."
     )
 
     # Snapshot: total finding count
@@ -120,10 +121,11 @@ def test_api_mechanical_on_fail_missing_premortem():
     Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
 
     engineering = FAIL
-      Reason: same as pass_well_formed -- F2 and P1 are HIGH; they fire
-      on this fixture too because it shares the same table/prose structure.
-      The missing Pre-mortem triggers PBR checks (P2), but P2 is LOW here
-      so it does not change the engineering verdict.
+      Reason: same drivers as pass_well_formed -- F3.unverified_cross_plan_ref
+      (HIGH) and P1.orphan_identifier (HIGH) cause the FAIL.  F2.duplicate_fact
+      fires (LOW) on the shared table/prose structure but does not affect the
+      verdict.  The missing Pre-mortem is an epistemic (G-layer) concern, not
+      a mechanical one, so the F/PBR layer adds no finding for it here.
 
     total findings = 25
       Breakdown: F2 x 20, F3 x 1, P1 x 4.
@@ -178,8 +180,9 @@ def test_api_mechanical_on_fail_no_g9_anchor():
     Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
 
     engineering = FAIL
-      Reason: F2.duplicate_fact fires as HIGH (same repeated phrases in
-      Reference Class table).  P1.orphan_identifier fires as HIGH.
+      Reason: P1.orphan_identifier (HIGH) drives the FAIL.  F2.duplicate_fact
+      also fires (LOW, same repeated phrases in the Reference Class table) but
+      does not affect the verdict.
       Neither F3 nor any anchor-specific mechanical check fires here because
       the G9 anchor check is a G-layer (epistemological) gate; the F-layer
       only flags structural issues.
