@@ -20,3 +20,4 @@ env/
 .DS_Store
 .worktrees/
 .planning/SCRATCH/
+*.db

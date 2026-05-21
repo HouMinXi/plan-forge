@@ -1,0 +1,127 @@
+<!-- plan-forge scaffold: replace every <...> placeholder, then run plan-forge check.
+     Note: a freshly generated scaffold produces ~20 F2.duplicate_fact LOW findings
+     because section headings (Gray Rhinos, Black Swans, etc.) repeat in table headers.
+     These are expected on unmodified scaffolds; they disappear once you fill in real content.
+-->
+# {{ plan_name }}
+
+<one-sentence description of what this plan delivers>
+
+## Success Criteria
+
+| SC | Criterion | Fail Condition |
+|----|-----------|----------------|
+| SC-1 | <first measurable criterion> | FAILS if test_primary_path does not pass |
+| SC-2 | <second measurable criterion> | FAILS if test_boundary_case does not pass |
+
+## Test Plan
+
+- test_primary_path: covers SC-1; <what it verifies>
+- test_boundary_case: covers SC-2; <what it verifies>
+
+## Overview
+
+<Two-sentence summary of the plan. Sentence one states the primary goal.>
+<Sentence two states the primary entry point and what it returns.>
+
+## Deliverables
+
+| Item | Description |
+|------|-------------|
+| `<deliverable_a>` | <what deliverable_a provides to callers> |
+| `<deliverable_b>` | <what deliverable_b provides to callers> |
+
+## Module Designs
+
+```python
+def scaffold_entry(plan_text):
+    pass
+
+
+def <helper_function>(plan_text):
+    pass
+```
+
+## Implementation Tasks
+
+| Task | Description | Output |
+|------|-------------|--------|
+| task-1 | <first implementation task> | `scaffold_entry` |
+| task-2 | <second implementation task> | <output artifact> |
+
+## Reference Class
+
+Historical projects with similar scope and plan-vs-actual ratios:
+
+| Project | Scope | Actual Duration | Plan-vs-Actual |
+|---------|-------|-----------------|----------------|
+| <project-alpha> | <scope description> | <N> weeks | 1.0x |
+| <project-beta> | <scope description> | <N> weeks | 1.0x |
+
+<Two-sentence outside-view commentary. State the implied multiplier and how it applies here.>
+
+## Risks
+
+### Known Risks
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| <known risk one> | <percent>% | <Medium or High> | <mitigation action> |
+| <known risk two> | <percent>% | <Medium or High> | <mitigation action> |
+
+### Gray Rhinos
+
+| Gray Rhino | Denial Reason | Counter |
+|------------|---------------|---------|
+| <obvious risk that teams tend to ignore> | <why teams deny it despite evidence> | <counter action> |
+| <second gray rhino> | <denial reason> | <counter action> |
+
+### Black Swans
+
+| Black Swan | Survival Plan |
+|------------|---------------|
+| <low-probability, high-impact event> | <how the plan survives this event> |
+| <second black swan> | <survival plan for second event> |
+
+## Pre-mortem
+
+Imagine the project has failed. What went wrong?
+
+1. <failure cause one>. early_warning: <observable signal>. counter: <corrective action>.
+2. <failure cause two>. early_warning: <observable signal>. counter: <corrective action>.
+3. <failure cause three>. early_warning: <observable signal>. counter: <corrective action>.
+4. <failure cause four>. early_warning: <observable signal>. counter: <corrective action>.
+5. <failure cause five>. early_warning: <observable signal>. counter: <corrective action>.
+
+## Scope Challenge
+
+Q1: Does this need to exist? Yes -- <state why this work needs to exist and what problem it solves>.
+This work is justified by <evidence or demand signal>.
+
+Q2: Who are the consumers? Three concrete consumers have been identified:
+<consumer one>, <consumer two>, and <consumer three>.
+Each consumer has a confirmed demand signal from <source>.
+
+Q3: What is the do-nothing cost? The status quo cost is estimated at
+<N> hours per <unit of work>, multiplied by <M> occurrences per quarter.
+The do-nothing path has a measurable cost of <total> per quarter.
+
+Q4: Barbell analysis: either build the minimal version
+(<N> weeks, lower upside) or build the full version
+(<M> weeks, higher upside). There is no middle ground that delivers
+proportional value. We choose <option> because <reason>.
+
+## Chaos Response
+
+1. <stressor scenario one> -- the system will survive by <mitigation>.
+2. <stressor scenario two> -- throughput will degrade gracefully; <degradation description>.
+3. <stressor scenario three> -- the plan benefits from this event by <benefit description>.
+
+## External Voices
+
+- Author-A (2000). Title of first publication or article.
+- Author-B (2000). Title of second publication or article.
+
+However, critics note that <dissenting perspective on the approach taken in this plan>.
+
+The 2000 failure case demonstrated that <lesson learned from the historical failure>.

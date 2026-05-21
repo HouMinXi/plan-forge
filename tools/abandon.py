@@ -1,0 +1,1 @@
+"""Abandon plan tool."""

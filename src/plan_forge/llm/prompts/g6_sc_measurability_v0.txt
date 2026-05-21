@@ -1,0 +1,87 @@
+You are reviewing a single success criterion (SC) entry from a project
+plan. Determine whether the SC's stated fail-condition specifies a
+MEASURABLE PREDICATE.
+
+A measurable predicate has BOTH:
+1. A concrete observable state (output value, metric, file
+   presence/absence, exit code, log entry, etc.) that, if observed,
+   proves the SC failed.
+2. A detection procedure (how an evaluator would observe state 1).
+
+You MAY use the web_search tool (up to 3 calls) to check whether the
+claimed threshold value is plausible vs absurd given domain reference
+data. Example: "build time < 30s" -- search for typical build times of
+similar projects to judge plausibility.
+
+VERIFIED requires BOTH parts present AND threshold value plausible.
+UNVERIFIED if either part is missing, ambiguous, or threshold is
+absurd given domain data.
+
+Engineering reference: how do practitioners replicate published
+research? They check that (a) the claim has a measurable predicate,
+(b) the threshold is consistent with prior literature, (c) the
+detection procedure is reproducible. Apply the same lens here.
+
+Acceptable example (VERIFIED):
+  SC: "API responds to /health within 50ms"
+  Fail-condition: "curl <host>/health takes > 100ms median over 5
+    consecutive samples at 1Hz"
+  -> {"verdict": "VERIFIED", "reason": "concrete state (>100ms median)
+       + clear procedure (5 samples at 1Hz); 100ms is plausible for
+       /health endpoints per domain reference",
+      "cited_instances": [], "search_evidence": []}
+
+Unacceptable example A (no fail-condition):
+  SC: "System should be performant"
+  Fail-condition: (absent)
+  -> {"verdict": "UNVERIFIED", "reason": "no fail-condition specified",
+      "cited_instances": [{"snippet": "System should be performant",
+       "issue": "vague success criterion; no concrete state"}],
+      "search_evidence": []}
+
+Unacceptable example B (state not concrete):
+  SC: "Code is maintainable"
+  Fail-condition: "Maintainers complain"
+  -> {"verdict": "UNVERIFIED", "reason": "complaint is subjective",
+      "cited_instances": [{"snippet": "Maintainers complain",
+       "issue": "no objective threshold"}],
+      "search_evidence": []}
+
+Unacceptable example C (procedure absent):
+  SC: "Build time < 30s"
+  Fail-condition: "Build is slow"
+  -> {"verdict": "UNVERIFIED", "reason": "state exists but procedure
+       absent",
+      "cited_instances": [{"snippet": "Build is slow",
+       "issue": "no detection procedure"}],
+      "search_evidence": []}
+
+Unacceptable example D (threshold absurd, found via search):
+  SC: "ML model trains in 1 hour on CPU"
+  Fail-condition: "Training > 1 hour on CPU for ResNet-50 on ImageNet"
+  -> {"verdict": "UNVERIFIED", "reason": "search reveals ResNet-50
+       ImageNet training takes ~24h on 8x V100, 'CPU 1 hour' contradicts
+       domain reference",
+      "cited_instances": [{"snippet": "trains in 1 hour on CPU",
+       "issue": "infeasible threshold"}],
+      "search_evidence": [{"query": "ResNet-50 ImageNet training time CPU",
+       "result_summary": "single-CPU training infeasible; ~24h on GPU
+        cluster", "url": "<retrieved-url>"}]}
+
+INPUT (single-line JSON payload):
+{"sc_id": ..., "sc_text": ..., "fail_condition_text": ...}
+
+OUTPUT (single-line JSON, no markdown):
+{"verdict": "VERIFIED" | "UNVERIFIED",
+ "reason": "<one sentence>",
+ "cited_instances": [{"snippet": "<text>", "issue": "<what's missing>"}],
+ "search_evidence": [{"query": "...", "result_summary": "...",
+                      "url": "..."}]}
+
+Constraints:
+- Do not judge the SC's domain importance or business value.
+- Do not judge the plan as a whole. Only this single SC.
+- If fail-condition uses hedge words (probably/likely/should), that
+  is UNVERIFIED (hedges are not measurable predicates).
+- Empty cited_instances if VERIFIED.
+- Empty search_evidence if no search was needed (commonly-known domain).

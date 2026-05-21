@@ -1,5 +1,38 @@
 # plan-forge
 
+## Development setup
+
+Prerequisites: Python 3.13+, uv.
+
+1. Install plan-forge in editable mode:
+   ```
+   uv venv --python 3.13
+   uv pip install -e .[dev] --python .venv/bin/python
+   ```
+2. Apply database migrations (creates SQLite corpus DB at
+   `~/.local/share/plan-forge/corpus.db`):
+   ```
+   .venv/bin/alembic upgrade head
+   ```
+3. Run tests:
+   ```
+   .venv/bin/pytest tests/ -q
+   ```
+
+### Optional: switch to Postgres
+
+For multi-user / production use, start the bundled Postgres
+service and point plan-forge at it:
+
+```
+docker compose up -d
+uv pip install -e .[dev,postgres] --python .venv/bin/python
+export PLAN_FORGE_CORPUS_URL=postgresql+psycopg://plan_forge:dev@localhost:5432/plan_forge
+.venv/bin/alembic upgrade head
+```
+
+The same migrations and ORM models work on both backends.
+
 An epistemological gate for plans, drafts, and proposals authored by humans
 working with AI assistance.
 

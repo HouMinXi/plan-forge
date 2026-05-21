@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plan-forge"
+version = "0.1.0a1"
+description = "Epistemological gate enforcer for plan documents"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [{name = "Minxi Hou", email = "houminxi@gmail.com"}]
+dependencies = [
+    "anthropic>=0.40.0",
+    "openai>=1.50.0",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "jinja2>=3.1",
+    "httpx>=0.27",
+    "markdown-it-py>=3.0",
+]
+
+[project.optional-dependencies]
+postgres = [
+    "psycopg[binary]>=3.2",
+]
+dev = [
+    "testcontainers[postgres]>=4.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+plan-forge = "plan_forge.adapters.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+markers = [
+    "live: real API calls; requires provider credentials",
+    "postgres: requires a running Postgres instance (set PLAN_FORGE_TEST_POSTGRES_URL)",
+]
