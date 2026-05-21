@@ -1,4 +1,4 @@
-"""Tests for audit-retroactive CLI handler (Phase 3)."""
+"""Tests for audit-retroactive CLI handler."""
 from __future__ import annotations
 
 import shutil

@@ -1,4 +1,4 @@
-"""Tests for CLI argparse skeleton and dispatch (Phase 1)."""
+"""Tests for CLI argparse skeleton, dispatch, and error guard."""
 from __future__ import annotations
 
 import pytest

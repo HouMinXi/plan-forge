@@ -1,4 +1,4 @@
-"""Tests for check and scaffold CLI handlers (Phase 2)."""
+"""Tests for check and scaffold CLI handlers."""
 from __future__ import annotations
 
 import shutil
