@@ -1,7 +1,7 @@
 """PBR (Perspective-Based Reading) checks package.
 
 Exposes run(parsed) which aggregates P1, P2, P5 findings in stable
-order.  P6 (scope-drift detection) is not yet implemented.
+order.  P6 (metadata-currency) is planned for T17 and not yet integrated.
 """
 from __future__ import annotations
 

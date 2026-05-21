@@ -67,6 +67,36 @@ cross-run state + heuristic tuning) exceeds the expected value.
 
 ---
 
+## Gap 2: General ack marker system (MANIFESTO Section 9)
+
+**What is missing**: a parser pass plus per-gate handler for the inline
+`<!-- plan-forge: ack:G<N> -->` marker that MANIFESTO Section 9 (Failure
+Mode Acknowledgment) names as the sanctioned way to acknowledge a
+deliberate deviation with rationale
+("Use sparingly; counted in metrics").  Only the G4-specific
+`<!-- plan-forge: hedge-ok -->` marker exists today; no general
+`ack:G<N>` is recognized by the parser or any G gate.
+
+**Why it matters**: without it, an author with a justified reason to
+deviate from a gate has no sanctioned escape hatch, so the only way to
+pass is mechanical-only mode (suppressing the whole epistemic run) --
+exactly the linter-bypass mindset the MANIFESTO rejects.  The marker is
+the designed pressure-release valve; its absence pushes users toward
+cruder workarounds.
+
+**Why it is not in v0.1**: a general ack system needs (a) parser
+extraction of `ack:G<N>` comments, (b) a per-gate convention for honoring
+an ack (downgrade vs suppress), and (c) a metrics counter so acks are
+visible rather than silent.  None of T01-T35 scopes this; the marker was
+described in the MANIFESTO before the gate architecture settled.
+
+**Promotion signal**: 3+ corpus_db cases (after v0.1 ships) where a real
+plan failed a gate for a deviation the author could justify AND the
+author fell back to mechanical-only mode or abandoned plan-forge for that
+plan.  That establishes the escape-hatch demand the marker would serve.
+
+---
+
 Add new gaps below this line.  Keep the four-field format consistent
 so the file does not drift.  If a gap belongs in Out of Scope (we
 have decided not to build it) or in Open Questions (it blocks a

@@ -10,26 +10,21 @@ Model: moonshot-v1-32k (confirmed available 2026-04 per project memory).
 """
 from __future__ import annotations
 
-import hashlib
-import json
 from datetime import datetime, timezone
 
 import openai
 
 from plan_forge.llm.cache import SqlAlchemyCacheBackend
-from plan_forge.llm.client import HealthStatus, LLMResponse, parse_verdict_response
+from plan_forge.llm.client import (
+    HealthStatus,
+    LLMResponse,
+    cache_key,
+    parse_verdict_response,
+)
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import KIMI_WEB_SEARCH_TOOL
 
 _KIMI_BASE_URL = "https://api.moonshot.ai/v1"
-
-
-def _cache_key(cache_key_inputs: dict, provider: str, model: str,
-               tool_schema: dict | None) -> str:
-    parts = json.dumps(cache_key_inputs, sort_keys=True)
-    parts += provider + model
-    parts += json.dumps(tool_schema, sort_keys=True) if tool_schema else "null"
-    return hashlib.sha256(parts.encode()).hexdigest()
 
 
 @register("kimi")
@@ -88,7 +83,7 @@ class KimiClient:
         tool_use_schema: dict | None = None,
         cache_key_inputs: dict,
     ) -> LLMResponse:
-        key = _cache_key(cache_key_inputs, self.name, self.model, tool_use_schema)
+        key = cache_key(cache_key_inputs, self.name, self.model, tool_use_schema)
         cached = self._cache.get(key)
         if cached is not None:
             return LLMResponse(**cached)

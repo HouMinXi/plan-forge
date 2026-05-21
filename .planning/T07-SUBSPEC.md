@@ -58,11 +58,18 @@ def run(parsed: ParsedPlan, preamble: str | None = None) -> list[Finding]:
 Finding(
     check_id=<see per-F table>,
     severity=<see per-F table>,
-    location=<"line:<N>" OR "SC-<id>:line:<N>" OR "section:<heading>:line:<N>">,
+    location=<"line:<N>" OR "line:<N>:col:<N>" OR "SC-<id>:line:<N>"
+             OR "preamble:sentence:<N>">,
     message=<see per-F format>,
     fix_hint=<see per-F format>,
 )
 ```
+
+`line:<N>:col:<N>` is used by F7 to point at a specific column (the
+non-ASCII character position); `preamble:sentence:<N>` is used by F6
+because the preamble is supplied as a separate text block with no line
+numbers.  No F-check emits `section:<heading>:line:<N>`; that form is a
+PBR/P5 location and is specified in T08, not here.
 
 `llm_evidence` and `evidence_tier_summary` are left at default (empty)
 because F1-F7 are pure mechanical.
