@@ -47,7 +47,7 @@ def _assert_verdict_structure(result: Verdict, fixture_name: str) -> None:
             f"{fixture_name}: each findings element must be Finding, "
             f"got {type(item)}"
         )
-    # D3 contract: epistemic is always VISION in mechanical-only mode
+    # epistemic is always VISION in mechanical-only mode (no G-gates run)
     assert result.epistemic == EpistemicVerdict.VISION, (
         f"{fixture_name}: epistemic must always be VISION in mechanical-only mode"
     )

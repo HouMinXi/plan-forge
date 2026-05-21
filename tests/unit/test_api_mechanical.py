@@ -35,7 +35,7 @@ def test_check_mechanical_empty_plan():
     """Empty string input must return a Verdict (not raise).
 
     Engineering must be PASS (no HIGH/BLOCKER findings from empty input).
-    Epistemic must be VISION (D3 contract).
+    Epistemic must be VISION: mechanical-only mode never runs G-gates.
     Findings may be empty or contain trivial F-layer findings; structure
     is asserted, not contents.
     """
@@ -66,7 +66,7 @@ def test_check_mechanical_returns_verdict_type():
 # ---------------------------------------------------------------------------
 
 def test_check_mechanical_epistemic_always_vision():
-    """D3 contract: epistemic == VISION for all inputs in mechanical-only mode.
+    """check_mechanical() always returns epistemic == VISION; no G-gates run.
 
     Three inputs tested: empty / clean pass fixture / fail fixture with
     non-ASCII (f7_fail.md).  All must return VISION.
@@ -109,7 +109,7 @@ def test_check_mechanical_engineering_fail_on_high_finding():
     """f7_fail.md contains intentional non-ASCII characters.
 
     F7 emits HIGH severity findings for each non-ASCII byte found.
-    D2 contract: any HIGH finding must flip engineering to FAIL.
+    Any HIGH finding must flip engineering to FAIL.
     """
     result = check_mechanical(_load("f7_fail.md"))
     high_ids = [
