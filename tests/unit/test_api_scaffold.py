@@ -1,8 +1,5 @@
-"""Unit tests for api.scaffold().
-
-Phase 2 tests: file I/O, path resolution, boundary conditions, and
-name safety validation.
-"""
+"""Unit tests for api.scaffold(): file I/O, path resolution, boundary conditions,
+and name safety validation."""
 from __future__ import annotations
 
 import pytest

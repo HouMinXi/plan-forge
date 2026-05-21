@@ -1,7 +1,4 @@
-"""Unit tests for plan_forge.scaffold.render().
-
-Phase 1 tests: rendering basics and required section presence.
-"""
+"""Unit tests for plan_forge.scaffold.render()."""
 from __future__ import annotations
 
 from plan_forge.scaffold import render

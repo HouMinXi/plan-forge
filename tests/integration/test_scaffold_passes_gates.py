@@ -1,8 +1,7 @@
 """Integration test: scaffold output passes mechanical gates by construction.
 
-Phase 3 contract: check(scaffold_output, llm_clients=[]) must yield zero
-BLOCKER and zero HIGH findings from the mechanical layer. This is the
-acceptance criterion for T14 -- the skeleton is structurally complete so
+check(scaffold_output, llm_clients=[]) must yield zero BLOCKER and zero HIGH
+findings from the mechanical layer. The skeleton is structurally complete so
 the human can focus on content, not on satisfying section requirements.
 """
 from __future__ import annotations
