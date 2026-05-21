@@ -60,6 +60,10 @@ class TestAuditRetroactive:
             "audit-retroactive", str(tmp_path), "--mechanical-only",
         ])
         assert code == 1
+        out = capsys.readouterr().out
+        totals = out.strip().splitlines()[-1]
+        assert "2 plans:" in totals
+        assert "1 fail" in totals
 
     def test_audit_all_vision_exit3(
         self, tmp_path: Path, monkeypatch,
@@ -97,7 +101,7 @@ class TestAuditRetroactive:
     def test_audit_empty_dir_exit0(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
     ):
-        code = main(["audit-retroactive", str(tmp_path)])
+        code = main(["audit-retroactive", str(tmp_path), "--mechanical-only"])
         assert code == 0
         out = capsys.readouterr().out
         assert "no plans found" in out
@@ -105,7 +109,7 @@ class TestAuditRetroactive:
     def test_audit_missing_dir_exit4(
         self, capsys: pytest.CaptureFixture[str],
     ):
-        code = main(["audit-retroactive", "/nonexistent/dir"])
+        code = main(["audit-retroactive", "/nonexistent/dir", "--mechanical-only"])
         assert code == 4
         err = capsys.readouterr().err
         assert "error:" in err
@@ -147,18 +151,15 @@ class TestAuditRetroactive:
         self, tmp_path: Path, monkeypatch,
         capsys: pytest.CaptureFixture[str],
     ):
-        _populate_dir(tmp_path, {
-            "good.md": WELL_FORMED,
-            "ugly.md": WELL_FORMED,
-        })
-        call_count = 0
+        # Use a unique sentinel for the file that should trigger an error,
+        # keying the mock on content rather than call order.
+        _UGLY_SENTINEL = "# synthetic bad plan\n"
+        shutil.copy2(WELL_FORMED, tmp_path / "good.md")
+        (tmp_path / "ugly.md").write_text(_UGLY_SENTINEL, encoding="utf-8")
         _real_check = __import__("plan_forge.api", fromlist=["check"]).check
 
         def _check_or_boom(plan_text, **kw):
-            nonlocal call_count
-            call_count += 1
-            # First file (good.md, sorted) succeeds; second (ugly.md) fails.
-            if call_count == 2:
+            if plan_text == _UGLY_SENTINEL:
                 raise RuntimeError("parse exploded")
             return _real_check(plan_text, **kw)
 
@@ -174,7 +175,17 @@ class TestAuditRetroactive:
         lines = out.strip().splitlines()
         # Both files get a line (ERROR for ugly, verdict for good)
         assert any("ERROR" in line and "ugly.md" in line for line in lines)
-        assert any("good.md" in line and "engineering=" in line for line in lines)
+        assert any(
+            "good.md" in line and "engineering=" in line and "epistemic=" in line
+            for line in lines
+        )
+        # Totals line must reflect the error bucket correctly.
+        totals = lines[-1]
+        assert "2 plans:" in totals
+        assert "1 pass" in totals
+        assert "0 fail" in totals
+        assert "0 vision" in totals
+        assert "1 error" in totals
 
     def test_audit_totals_line(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
@@ -195,3 +206,39 @@ class TestAuditRetroactive:
         assert "fail" in totals
         assert "vision" in totals
         assert "error" in totals
+
+    def test_audit_mixed_fail_and_vision_exit1(
+        self, tmp_path: Path, monkeypatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        """Rollup with both FAIL (code 1) and VISION (code 3) files exits 1.
+
+        Verifies that the 4>1>3>0 precedence holds when both FAIL and VISION
+        are present in the batch -- FAIL must win over VISION.
+        """
+        from plan_forge.verdict import Verdict, EngineeringVerdict, EpistemicVerdict
+
+        _FAIL_SENTINEL = "# fail plan\n"
+        _VISION_SENTINEL = "# vision plan\n"
+        (tmp_path / "a_fail.md").write_text(_FAIL_SENTINEL, encoding="utf-8")
+        (tmp_path / "b_vision.md").write_text(_VISION_SENTINEL, encoding="utf-8")
+
+        def _mock_check(plan_text, **kw):
+            if plan_text == _FAIL_SENTINEL:
+                return Verdict(
+                    engineering=EngineeringVerdict.FAIL,
+                    epistemic=EpistemicVerdict.FAIL,
+                )
+            return Verdict(
+                engineering=EngineeringVerdict.PASS,
+                epistemic=EpistemicVerdict.VISION,
+            )
+
+        monkeypatch.setattr("plan_forge.adapters.cli.main.api.check", _mock_check)
+        code = main(["audit-retroactive", str(tmp_path), "--mechanical-only"])
+        # Rollup: a_fail=code1, b_vision=code3 -> worst is 1 (FAIL > VISION)
+        assert code == 1
+        totals = capsys.readouterr().out.strip().splitlines()[-1]
+        assert "2 plans:" in totals
+        assert "1 fail" in totals
+        assert "1 vision" in totals

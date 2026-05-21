@@ -84,6 +84,9 @@ def _cmd_audit(args: argparse.Namespace) -> int:
         print("no plans found")
         return 0
 
+    # Keys: all valid per-file rollup codes (0/1/3/4). Code 2 is argparse-
+    # reserved and propagates as SystemExit before any handler runs; it
+    # cannot appear inside this loop, so no key 2 is needed.
     counts = {0: 0, 1: 0, 3: 0, 4: 0}
     llm_clients = [] if args.mechanical_only else None
 
@@ -91,6 +94,8 @@ def _cmd_audit(args: argparse.Namespace) -> int:
         filepath = audit_dir / filename
         try:
             plan_text = filepath.read_text(encoding="utf-8")
+            # preamble is intentionally omitted: a batch audit applies no
+            # single orchestrator preamble across heterogeneous plans.
             verdict = api.check(
                 plan_text, llm_clients=llm_clients,
             )
@@ -101,8 +106,11 @@ def _cmd_audit(args: argparse.Namespace) -> int:
             )
         except Exception as exc:
             code = 4
+            # SUBSPEC interpretation: per-file ERROR lines go to stdout (not
+            # stderr) so the batch output is a stable N-line block for CI
+            # parsers.  Only CLI-level errors (dir missing) go to stderr.
             print(f"{filename}: ERROR {exc}")
-        counts[code] = counts.get(code, 0) + 1
+        counts[code] += 1
 
     total = sum(counts.values())
     print(

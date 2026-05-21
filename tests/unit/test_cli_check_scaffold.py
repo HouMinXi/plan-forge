@@ -96,18 +96,29 @@ class TestCheckCommand:
         assert "error:" in err
 
     def test_check_preamble_passes(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+        self, tmp_path: Path, monkeypatch, capsys: pytest.CaptureFixture[str],
     ):
         plan = tmp_path / "plan.md"
         shutil.copy2(WELL_FORMED, plan)
+        preamble_text = "Build the thing.\n"
         preamble = tmp_path / "preamble.md"
-        preamble.write_text("Build the thing.\n", encoding="utf-8")
+        preamble.write_text(preamble_text, encoding="utf-8")
+        captured: list[str | None] = []
+        _real_check = __import__("plan_forge.api", fromlist=["check"]).check
+
+        def _spy(plan_text, **kw):
+            captured.append(kw.get("preamble"))
+            return _real_check(plan_text, **kw)
+
+        monkeypatch.setattr("plan_forge.adapters.cli.main.api.check", _spy)
         code = main([
             "check", str(plan), "--mechanical-only",
             "--preamble", str(preamble),
         ])
-        # Preamble is accepted; exit per verdict (pass or vision, not 4).
+        # Preamble is accepted; exit per verdict (not 4 = IO error).
         assert code in (0, 1, 3)
+        # Verify the preamble text was actually forwarded to api.check.
+        assert captured and captured[0] == preamble_text
 
     def test_check_preamble_missing_exit4(
         self, capsys: pytest.CaptureFixture[str],
