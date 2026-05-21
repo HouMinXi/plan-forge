@@ -14,6 +14,7 @@ from plan_forge.verdict import Severity
 def test_scaffold_output_passes_mechanical_gates(tmp_path) -> None:
     """scaffold() output contains zero BLOCKER or HIGH findings when checked."""
     p = scaffold("contract-check", tmp_path)
+    assert p.is_absolute(), f"scaffold() must return an absolute Path; got {p}"
     text = p.read_text(encoding="utf-8")
     v = check(text, llm_clients=[])
     serious = [

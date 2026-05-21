@@ -34,10 +34,11 @@ def test_scaffold_default_dir_is_cwd(tmp_path, monkeypatch) -> None:
 
 
 def test_scaffold_refuses_existing(tmp_path) -> None:
-    """scaffold() raises FileExistsError when target already exists."""
+    """scaffold() raises FileExistsError when target already exists; .filename is set."""
     scaffold("p", tmp_path)
-    with pytest.raises(FileExistsError):
+    with pytest.raises(FileExistsError) as exc_info:
         scaffold("p", tmp_path)
+    assert exc_info.value.filename == str((tmp_path / "p.md").resolve())
 
 
 def test_scaffold_rejects_dotdot(tmp_path) -> None:
@@ -72,6 +73,20 @@ def test_scaffold_rejects_dot_leading(tmp_path) -> None:
             scaffold(bad, tmp_path)
 
 
+def test_scaffold_rejects_dot_trailing(tmp_path) -> None:
+    """scaffold() raises ValueError for trailing-dot names."""
+    for bad in ("foo.", "plan."):
+        with pytest.raises(ValueError):
+            scaffold(bad, tmp_path)
+
+
+def test_scaffold_rejects_overlong_name(tmp_path) -> None:
+    """scaffold() raises ValueError for names longer than 200 chars."""
+    scaffold("a" * 200, tmp_path)  # exactly at limit: accepted
+    with pytest.raises(ValueError):
+        scaffold("b" * 201, tmp_path)  # one over: rejected
+
+
 def test_scaffold_missing_output_dir(tmp_path) -> None:
     """scaffold() raises FileNotFoundError for nonexistent output_dir."""
     with pytest.raises(FileNotFoundError):
@@ -97,3 +112,14 @@ def test_scaffold_allows_dots_and_hyphens(tmp_path) -> None:
     result = scaffold("plan.v1-beta", tmp_path)
     assert result.exists()
     assert result.name == "plan.v1-beta.md"
+
+
+def test_scaffold_follows_symlinked_output_dir(tmp_path) -> None:
+    """scaffold() follows symlinks in output_dir; file lands in resolved target."""
+    real_dir = tmp_path / "real"
+    real_dir.mkdir()
+    link_dir = tmp_path / "link"
+    link_dir.symlink_to(real_dir)
+    result = scaffold("sym-test", link_dir)
+    assert result.is_absolute()
+    assert (real_dir / "sym-test.md").exists()

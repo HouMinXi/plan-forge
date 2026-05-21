@@ -1,7 +1,7 @@
 """Unit tests for api.check_mechanical() and _compute_engineering()."""
 import pathlib
 
-from plan_forge.api import check_mechanical, _compute_engineering, check
+from plan_forge.api import check_mechanical, _compute_engineering, check, scaffold
 from plan_forge.verdict import (
     Verdict,
     EngineeringVerdict,
@@ -213,6 +213,5 @@ def test_check_returns_verdict():
 
 def test_scaffold_is_implemented(tmp_path):
     """scaffold() is fully implemented; calling it must not raise."""
-    from plan_forge.api import scaffold as _scaffold
-    result = _scaffold("impl-check", tmp_path)
+    result = scaffold("impl-check", tmp_path)
     assert result.exists()

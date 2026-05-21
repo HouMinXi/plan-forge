@@ -24,7 +24,7 @@ def check_mechanical(
 ) -> Verdict:
     """Run mechanical checks (F1-F7 + PBR P1/P2/P5) only.
 
-    Does NOT run epistemological gates (G1-G10).  Use check()
+    Does NOT run epistemological gates (G1-G8).  Use check()
     for the full pipeline.
 
     Args:
@@ -177,33 +177,54 @@ def scaffold(name: str, output_dir: Path | None = None) -> Path:
     """Generate a plan skeleton and write it to <output_dir>/<name>.md.
 
     Args:
-        name: plan file base name (slug). Must match [A-Za-z0-9._-]+
-            and must not contain "..". Raises ValueError otherwise.
+        name: plan file base name (slug). Must match [A-Za-z0-9._-]+,
+            must not start or end with ".", and must not contain "..".
+            Raises ValueError otherwise.
         output_dir: directory to write into. Defaults to Path.cwd().
-            Raises FileNotFoundError if the directory does not exist
-            (never silently creates a directory tree).
+            Symlinks are followed (the file lands in the resolved target).
+            Raises FileNotFoundError if it does not exist or is not a
+            directory (never silently creates a directory tree).
 
     Returns:
         Absolute Path of the written .md file.
 
     Raises:
-        ValueError: name is empty, starts with ".", contains "..", or has unsafe chars.
+        ValueError: name is empty, longer than 200 chars, starts or ends with ".", contains "..", or has unsafe chars.
         FileNotFoundError: output_dir does not exist or is not a directory.
         FileExistsError: <output_dir>/<name>.md already exists.  The file
             is created atomically via exclusive-create mode so concurrent
             callers cannot silently overwrite each other.
+        RuntimeError: the bundled template file is missing (corrupted install).
     """
-    if not name or name.startswith(".") or ".." in name or not _SAFE_NAME.match(name):
+    # startswith/endswith guards are not subsumed by ".." in name:
+    # "foo." passes the ".." check but is still rejected (trailing dot).
+    # The 200-char limit keeps name.md well under NAME_MAX on all platforms.
+    if (not name or len(name) > 200 or name.startswith(".") or name.endswith(".")
+            or ".." in name or not _SAFE_NAME.match(name)):
         raise ValueError(f"unsafe scaffold name: {name!r}")
-    target_dir = Path(output_dir) if output_dir is not None else Path.cwd()
+    target_dir = (Path(output_dir) if output_dir is not None else Path.cwd()).resolve()
     if not target_dir.exists():
         raise FileNotFoundError(f"output_dir does not exist: {target_dir}")
     if not target_dir.is_dir():
         raise FileNotFoundError(f"output_dir is not a directory: {target_dir}")
     path = target_dir / f"{name}.md"
+    content = _render_scaffold(name)  # render before touching the filesystem
     try:
         with path.open("x", encoding="utf-8") as fh:
-            fh.write(_render_scaffold(name))
+            fh.write(content)
     except FileExistsError:
-        raise FileExistsError(f"refusing to overwrite existing file: {path}") from None
-    return path.resolve()
+        exc = FileExistsError(f"refusing to overwrite existing file: {path}")
+        exc.filename = str(path)  # OSError.filename is str by Python convention
+        raise exc from None
+    except FileNotFoundError as e:
+        # TOCTOU: target_dir was removed between the pre-check and open().
+        # Re-raise with the documented message; chain e for diagnostics.
+        exc = FileNotFoundError(f"output_dir does not exist: {target_dir}")
+        exc.filename = str(target_dir)
+        raise exc from e
+    except OSError:
+        # Write failed after file creation (e.g. disk full, permission denied).
+        # Remove the empty stub so callers can retry without manual cleanup.
+        path.unlink(missing_ok=True)
+        raise
+    return path  # target_dir was resolved at entry; path is already absolute
