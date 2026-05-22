@@ -14,7 +14,6 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
-from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -170,7 +169,7 @@ def test_human_verdict_check_constraint(tmp_path):
                 "cost_cap_usd, started_at) "
                 "VALUES ('abc', '0.1.0', 'off', 0.0, :ts)"
             ),
-            {"ts": datetime(2026, 1, 1)},
+            {"ts": "2026-01-01 00:00:00"},
         )
 
     def _insert_verdict(verdict_val):
@@ -181,7 +180,7 @@ def test_human_verdict_check_constraint(tmp_path):
                     "(run_id, triggered_at, bundle_text, human_verdict) "
                     "VALUES (1, :ts, 'bundle', :hv)"
                 ),
-                {"ts": datetime(2026, 1, 1), "hv": verdict_val},
+                {"ts": "2026-01-01 00:00:00", "hv": verdict_val},
             )
 
     # NULL is allowed
@@ -218,7 +217,7 @@ def test_outcome_type_check_constraint(tmp_path):
                 "cost_cap_usd, started_at) "
                 "VALUES ('xyz', '0.1.0', 'off', 0.0, :ts)"
             ),
-            {"ts": datetime(2026, 1, 1)},
+            {"ts": "2026-01-01 00:00:00"},
         )
 
     def _insert_outcome(otype):
@@ -229,7 +228,7 @@ def test_outcome_type_check_constraint(tmp_path):
                     "(run_id, outcome_type, outcome_date, recorder) "
                     "VALUES (1, :ot, :od, 'CI')"
                 ),
-                {"ot": otype, "od": datetime(2026, 6, 1)},
+                {"ot": otype, "od": "2026-06-01 00:00:00"},
             )
 
     # All valid values succeed
