@@ -12,10 +12,10 @@ No delete, no generic update.
 """
 from __future__ import annotations
 
-import hashlib
 from datetime import datetime, timezone
 
 from plan_forge.corpus import db
+from plan_forge.corpus import redact as _redact_mod
 from plan_forge.corpus.models import (
     Arbitration,
     Finding as DBFinding,
@@ -38,8 +38,8 @@ class CorpusRecorder:
     PLAN_FORGE_CORPUS_URL + db._reset_engine().
     """
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, redact: bool = False) -> None:
+        self._redact = redact
 
     def start_run(
         self,
@@ -55,12 +55,14 @@ class CorpusRecorder:
         ParsedPlan carries no path field (it may be None for stdin/tmp).
         plan_hash is the first 16 hex chars of SHA-256(plan.raw_text).
         """
-        plan_hash = hashlib.sha256(
-            plan.raw_text.encode("utf-8")
-        ).hexdigest()[:16]
+        if self._redact:
+            plan_text_to_store, plan_hash = _redact_mod.redact_plan_text(plan.raw_text)
+        else:
+            plan_hash = _redact_mod.compute_plan_hash(plan.raw_text)
+            plan_text_to_store = plan.raw_text
         row = PlanRun(
             plan_hash=plan_hash,
-            plan_text=plan.raw_text,
+            plan_text=plan_text_to_store,
             plan_path=plan_path,
             plan_forge_version=plan_forge_version,
             arbitration_mode=arbitration_mode,
@@ -78,7 +80,7 @@ class CorpusRecorder:
         run_id: int,
         engineering_verdict: str,
         epistemic_verdict: str,
-        actual_cost_usd: float,
+        actual_cost_usd: float | None,
     ) -> None:
         """Stamp completion fields on an open run.
 
