@@ -30,7 +30,7 @@ def run(parsed: ParsedPlan, preamble: str | None = None) -> list[Finding]:
                   When None, F6 returns [].
 
     Returns:
-        Concatenated Finding list in F1..F7, P1, P2, P5 order.
+        Concatenated Finding list in F1..F7, P1, P2, P5, P6 order.
     """
     findings: list[Finding] = []
     findings.extend(f1_sc_traceability.check(parsed))

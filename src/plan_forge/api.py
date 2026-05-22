@@ -22,7 +22,7 @@ def check_mechanical(
     plan_text: str,
     preamble: str | None = None,
 ) -> Verdict:
-    """Run mechanical checks (F1-F7 + PBR P1/P2/P5) only.
+    """Run mechanical checks (F1-F7 + PBR P1/P2/P5/P6) only.
 
     Does NOT run epistemological gates (G1-G8).  Use check()
     for the full pipeline.
@@ -35,7 +35,7 @@ def check_mechanical(
     Returns:
         Verdict with engineering computed from findings (D2),
         epistemic always VISION (D3), and findings list from
-        F1-F7 + P1/P2/P5.
+        F1-F7 + P1/P2/P5/P6.
     """
     parsed = parse(plan_text)
     findings = mechanical.run(parsed, preamble=preamble)
@@ -106,7 +106,7 @@ def check(
     parsed = parse(plan_text)
     findings: list[Finding] = []
 
-    # Layer 1: mechanical F1-F7 + PBR P1/P2/P5 (PBR delegated inside mechanical.run)
+    # Layer 1: mechanical F1-F7 + PBR P1/P2/P5/P6 (PBR delegated inside mechanical.run)
     findings.extend(mechanical.run(parsed, preamble=preamble))
 
     # Layer 2: epistemic G1-G8

@@ -102,3 +102,33 @@ so the file does not drift.  If a gap belongs in Out of Scope (we
 have decided not to build it) or in Open Questions (it blocks a
 decision now), move it there instead -- this file is the holding
 area for "we know it is missing AND we have not yet decided".
+
+---
+
+## Gap 3: P6 version-currency check
+
+**What is missing**: P6 v0.1 checks date-currency only (frontmatter date vs.
+in-body evidence of later work).  It does NOT check plan-version currency:
+whether a plan that declares its own version (e.g. "v0.3") in frontmatter
+contradicts a body that describes v0.4 design decisions or merge notes.
+
+**Why it matters**: a plan claiming to document v0.3 but describing v0.4
+logic misstates provenance in the same way a stale date does.  Corpus review
+found this pattern in multi-round plan documents where the plan-version field
+was not bumped after an R-round added new sections.
+
+**Why it is not in v0.1**: plan bodies are saturated with dependency-version
+tokens (e.g. "Python 3.11+", "SQLAlchemy 2.0", "Anthropic SDK").  A
+low-FP version-diff requires a frontmatter plan-version convention (e.g.
+"**Plan-version**: v0.3") that does not yet exist in the corpus.  Matching
+arbitrary version strings in body text against a frontmatter plan-version
+would produce heavy false positives on dependency strings.  The convention
+must emerge organically (or be added to the scaffold template) before
+detection logic can be calibrated.
+
+**Promotion signal**: a plan-version frontmatter convention emerges (proposed
+in scaffold template or corpus style guide), OR 3+ corpus_db cases are
+documented where stale plan-version metadata went undetected and caused
+confusion during cross-plan review.  At that point the promotion signal
+justifies adding _FM_VERSION_KEY_RE + body version-token scanning to P6,
+which can be done as a backwards-compatible addition to this module.
