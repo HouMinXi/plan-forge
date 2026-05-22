@@ -1844,8 +1844,8 @@ retroactive audit + review + ship.
 | T19 | Buffer slot 2 (wk 7-8 catch-up) | continue T18 absorption OR start T23 corpus.db | same gating logic as T18; cumulative slip > 1 week triggers descope checkpoint 2 |
 | T20 | LESSONS-RETRO.md scaffold (pre-audit infrastructure) | empty LESSONS-RETRO.md template + retroactive_audit.py runner skeleton | template ready to receive T34 audit data; runner can iterate phases/02-*/ paths |
 | T21 | Adapter A v0.1.0-alpha2 (pre-corpus integration) | __init__.py exports + minimal check() with G1-G8 + F1-F7 + PBR | `from plan_forge import check` returns Verdict on G1-G8 fixtures; sets stage for T22 corpus integration |
-| T22 | corpus/schema.sql + Alembic migration 0001 | migrations/versions/0001_initial_schema.py | `alembic upgrade head` creates 6 tables on fresh DB |
-| T23 | corpus/db.py + models.py + record.py | 3 modules + unit tests | record_plan_run / record_finding / record_evidence / record_arbitration / record_outcome / finalize_run all functional with append-only contracts; UPDATE allowed only on llm_evidence.tier monotonic transition |
+| T22 | corpus/schema.sql + models.py (6 ORM) + Alembic migration | migrations/versions/0002_corpus_schema.py + src/plan_forge/corpus/models.py + src/plan_forge/corpus/schema.sql | `alembic upgrade head` creates 6 tables on fresh DB AND alembic check passes |
+| T23 | corpus/db.py refinements + record.py + query.py | 3 modules + unit tests | record_plan_run / record_finding / record_evidence / record_arbitration / record_outcome / finalize_run all functional with append-only contracts; UPDATE allowed only on llm_evidence.tier monotonic transition |
 | T24 | corpus/redact.py + --corpus-private flag | privacy module + CLI flag | redacted plan_text stored as NULL with plan_hash preserved |
 | T25 | arbitration/surface.py with 4 modes | module + tests | `on_split_evidence_rich` default; correctly identifies split-with-evidence findings; `off` mode skips all |
 | T26 | arbitration/bundle.py | module + tests | human-readable markdown bundle includes per-provider verdict + cited instances + search evidence + tier |
