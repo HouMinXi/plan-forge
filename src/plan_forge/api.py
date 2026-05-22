@@ -1,9 +1,14 @@
 """Public API: check_mechanical(), check(), and scaffold()."""
 from __future__ import annotations
 
+import os
 import re
+import warnings
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
+from .corpus import CorpusRecorder
 from .parser import parse
 from .checks import mechanical, epistemic
 from .llm.registry import build_active_list
@@ -17,12 +22,17 @@ from .verdict import (
     Finding,
 )
 
+try:
+    _PLAN_FORGE_VERSION = _pkg_version("plan-forge")
+except PackageNotFoundError:
+    _PLAN_FORGE_VERSION = "unknown"
+
 
 def check_mechanical(
     plan_text: str,
     preamble: str | None = None,
 ) -> Verdict:
-    """Run mechanical checks (F1-F7 + PBR P1/P2/P5) only.
+    """Run mechanical checks (F1-F7 + PBR P1/P2/P5/P6) only.
 
     Does NOT run epistemological gates (G1-G8).  Use check()
     for the full pipeline.
@@ -33,9 +43,8 @@ def check_mechanical(
                   diff check.  When None, F6 returns no findings.
 
     Returns:
-        Verdict with engineering computed from findings (D2),
-        epistemic always VISION (D3), and findings list from
-        F1-F7 + P1/P2/P5.
+        Verdict; epistemic is always VISION in mechanical-only mode
+        (no G-gates run); findings cover F1-F7 + P1/P2/P5/P6.
     """
     parsed = parse(plan_text)
     findings = mechanical.run(parsed, preamble=preamble)
@@ -79,19 +88,25 @@ def _bootstrap_llm_clients() -> list[LLMClient]:
 def check(
     plan_text: str,
     *,
+    plan_path: str | None = None,
     llm_clients: list[LLMClient] | None = None,
     preamble: str | None = None,
+    corpus_private: bool = False,
 ) -> Verdict:
     """Run all gates (F1-F7 + PBR + G1-G8) and return aggregated Verdict.
 
     Args:
         plan_text: raw markdown text of the plan document.
+        plan_path: optional filesystem path of the plan file; stored in
+            the corpus run row when corpus recording is active.
         llm_clients: optional list of LLMClient instances for G4/G6/G8
             Part B.  If None, bootstraps from environment via registry +
             credentials.  If empty list [], skips LLM Part B
             (mechanical-only mode).
         preamble: optional orchestrator preamble for F6 preamble-body
             diff check.  When None, F6 returns no findings.
+        corpus_private: when True and corpus recording is active, the plan
+            text is omitted from the corpus row (only the hash is stored).
 
     Returns:
         Verdict with engineering (PASS/FAIL), epistemic (PASS/FAIL/VISION),
@@ -102,11 +117,30 @@ def check(
         non-vision serious finding fires the FAIL trigger).  A plan with
         non-vision-gate BLOCKERs (e.g. G4 aggregate, G8 absent section,
         F1 orphan SC) produces engineering=FAIL and epistemic=FAIL.
+        corpus_run_id is set when a corpus run row was successfully opened.
     """
     parsed = parse(plan_text)
+    recorder = None
+    run_id = None
+    if os.environ.get("PLAN_FORGE_CORPUS_URL"):
+        try:
+            recorder = CorpusRecorder(redact=corpus_private)
+            run_id = recorder.start_run(
+                parsed,
+                plan_path,
+                plan_forge_version=_PLAN_FORGE_VERSION,
+                arbitration_mode="off",
+                cost_cap_usd=0.0,
+            )
+        except Exception as exc:
+            warnings.warn(f"corpus start_run failed: {exc}", stacklevel=2)
+            recorder = None
+            run_id = None
+
+    # Functional gates -- not wrapped in corpus error handling so gate errors propagate.
     findings: list[Finding] = []
 
-    # Layer 1: mechanical F1-F7 + PBR P1/P2/P5 (PBR delegated inside mechanical.run)
+    # Layer 1: mechanical F1-F7 + PBR P1/P2/P5/P6 (PBR delegated inside mechanical.run)
     findings.extend(mechanical.run(parsed, preamble=preamble))
 
     # Layer 2: epistemic G1-G8
@@ -118,10 +152,24 @@ def check(
 
     engineering = _compute_engineering(findings)
     epistemic_verdict = _compute_epistemic(findings)
+
+    # Corpus finalize -- separate try/except keeps corpus errors from masking gate results.
+    if recorder is not None and run_id is not None:
+        try:
+            recorder.finalize_run(
+                run_id,
+                engineering.value,
+                epistemic_verdict.value,
+                None,
+            )
+        except Exception as exc:
+            warnings.warn(f"corpus finalize_run failed: {exc}", stacklevel=2)
+
     return Verdict(
         engineering=engineering,
         epistemic=epistemic_verdict,
         findings=findings,
+        corpus_run_id=run_id,
         active_providers=[c.name for c in llm_clients],
     )
 

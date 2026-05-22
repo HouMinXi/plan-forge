@@ -53,7 +53,13 @@ def _cmd_check(args: argparse.Namespace) -> int:
             return 4
 
     llm_clients = [] if args.mechanical_only else None
-    verdict = api.check(plan_text, llm_clients=llm_clients, preamble=preamble)
+    verdict = api.check(
+        plan_text,
+        plan_path=str(plan_path),
+        llm_clients=llm_clients,
+        preamble=preamble,
+        corpus_private=args.corpus_private,
+    )
     print(verdict.summary())
     return _verdict_to_exit_code(verdict)
 
@@ -97,7 +103,10 @@ def _cmd_audit(args: argparse.Namespace) -> int:
             # preamble is intentionally omitted: a batch audit applies no
             # single orchestrator preamble across heterogeneous plans.
             verdict = api.check(
-                plan_text, llm_clients=llm_clients,
+                plan_text,
+                plan_path=str(filepath),
+                llm_clients=llm_clients,
+                corpus_private=args.corpus_private,
             )
             code = _verdict_to_exit_code(verdict)
             print(
@@ -154,6 +163,12 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="FILE",
         help="Path to an orchestrator preamble file for F6 check.",
     )
+    check_p.add_argument(
+        "--corpus-private",
+        action="store_true",
+        default=False,
+        help="Omit plan text from corpus record; store hash only.",
+    )
 
     # scaffold
     scaffold_p = subparsers.add_parser(
@@ -179,6 +194,12 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="Skip LLM-based checks; run mechanical gates only.",
+    )
+    audit_p.add_argument(
+        "--corpus-private",
+        action="store_true",
+        default=False,
+        help="Omit plan text from corpus records; store hash only.",
     )
 
     return parser

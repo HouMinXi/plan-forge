@@ -1,7 +1,7 @@
 """Shared pytest fixtures for plan-forge tests.
 
 Fixtures provided:
-  corpus_engine   -- session-scoped SQLAlchemy engine (SQLite by default);
+  corpus_engine   -- function-scoped SQLAlchemy engine (SQLite by default);
                      isolates tests from the user corpus DB.
   clean_cache     -- function-scoped: deletes all llm_cache rows before test.
   postgres_engine -- session-scoped, constructed only when
@@ -79,13 +79,14 @@ def pytest_collection_modifyitems(config, items):
 # corpus_engine: per-session SQLite in tmp dir; avoids polluting user corpus
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def corpus_engine(tmp_path_factory):
-    """Session-scoped engine pointing to an isolated test SQLite DB.
+    """Function-scoped engine pointing to an isolated test SQLite DB.
 
-    Runs alembic upgrade head so all tables exist before tests run.
-    Resets the singleton after the session so production code uses
-    the correct engine in subsequent sessions.
+    Creates the schema via Base.metadata.create_all (faster than alembic).
+    Resets the singleton after the test so the env var does not leak
+    across tests (env-var must not persist between check() calls that
+    test corpus-off behavior).
     """
     test_db = tmp_path_factory.mktemp("corpus") / "test_corpus.db"
     url = f"sqlite:///{test_db}"

@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 _engine = None
@@ -20,10 +20,24 @@ def _default_url() -> str:
     url = os.environ.get("PLAN_FORGE_CORPUS_URL")
     if url:
         return url
-    xdg = os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share"))
+    xdg = os.environ.get(
+        "XDG_DATA_HOME", os.path.expanduser("~/.local/share")
+    )
     db_dir = os.path.join(xdg, "plan-forge")
     os.makedirs(db_dir, exist_ok=True)
     return "sqlite:///" + os.path.join(db_dir, "corpus.db")
+
+
+def _sqlite_fk_on(dbapi_conn, _rec) -> None:
+    """Enable SQLite FK enforcement on every new connection.
+
+    SQLite ignores FK constraints by default; each connection must issue
+    PRAGMA foreign_keys=ON.  Postgres enforces FKs natively so this
+    listener is only registered for SQLite backends.
+    """
+    cur = dbapi_conn.cursor()
+    cur.execute("PRAGMA foreign_keys=ON")
+    cur.close()
 
 
 def get_engine():
@@ -32,6 +46,8 @@ def get_engine():
     if _engine is None:
         url = _default_url()
         _engine = create_engine(url, pool_pre_ping=True)
+        if _engine.dialect.name == "sqlite":
+            event.listen(_engine, "connect", _sqlite_fk_on)
         _SessionFactory = sessionmaker(bind=_engine)
     return _engine
 

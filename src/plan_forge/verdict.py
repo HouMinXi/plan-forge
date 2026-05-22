@@ -67,6 +67,7 @@ class LLMEvidence:
     cited_instances: list[dict] = field(default_factory=list)
     search_evidence: list[dict] = field(default_factory=list)
     tier: EvidenceTier = EvidenceTier.UNCLASSIFIED
+    evidence_id: int | None = None  # set by corpus recorder after INSERT
 
 
 @dataclass
