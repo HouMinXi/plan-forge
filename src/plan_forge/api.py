@@ -156,6 +156,34 @@ def check(
     engineering = _compute_engineering(findings)
     epistemic_verdict = _compute_epistemic(findings)
 
+    # Persist findings and evidence before finalizing run.
+    if recorder is not None and run_id is not None and not corpus_private:
+        for finding in findings:
+            try:
+                finding.finding_id = recorder.record_finding(
+                    run_id, finding
+                )
+            except Exception as exc:
+                warnings.warn(
+                    f"corpus persist finding {finding.check_id}"
+                    f"@{finding.location} failed: {exc}",
+                    stacklevel=2,
+                )
+                continue
+            if finding.llm_evidence:
+                gate_id = finding.check_id.removesuffix(".llm")
+                for ev in finding.llm_evidence:
+                    try:
+                        recorder.record_evidence(
+                            run_id, gate_id, finding.location, ev
+                        )
+                    except Exception as exc:
+                        warnings.warn(
+                            f"corpus persist evidence {gate_id}"
+                            f"@{finding.location} failed: {exc}",
+                            stacklevel=2,
+                        )
+
     # Corpus finalize -- separate try/except keeps corpus errors from masking gate results.
     if recorder is not None and run_id is not None:
         try:

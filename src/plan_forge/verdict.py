@@ -77,6 +77,9 @@ class Finding:
     Non-defaulted fields come first (Python dataclass requirement).
     fix_hint defaults to "" because many mechanical findings have no
     specific fix beyond the message itself.
+    finding_id is corpus-internal: None unless an active, non-private
+    corpus run persisted the finding. Library callers must not assume
+    it is set.
     """
     # Required (no defaults)
     check_id: str      # "F1" / "G3" / "G6.mechanical" / "G6.llm" / etc.
@@ -87,6 +90,7 @@ class Finding:
     fix_hint: str = ""
     llm_evidence: list[LLMEvidence] = field(default_factory=list)
     evidence_tier_summary: dict = field(default_factory=dict)
+    finding_id: int | None = None
 
 
 @dataclass

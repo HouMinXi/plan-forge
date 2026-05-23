@@ -90,6 +90,7 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
             "check_id": f.check_id,
             "location": f.location,
             "bundle_text": bundle.build_evidence_bundle(f),
+            "finding_id": f.finding_id,
         }
         for i, f in enumerate(to_arb)
     ]
@@ -163,6 +164,7 @@ def _cmd_capture(args: argparse.Namespace) -> int:
 
     try:
         bundle_text = candidates[idx]["bundle_text"]
+        finding_id = candidates[idx].get("finding_id")
     except (KeyError, TypeError) as exc:
         print(json.dumps({"error": f"malformed session file: {exc}"}))
         return 1
@@ -170,7 +172,7 @@ def _cmd_capture(args: argparse.Namespace) -> int:
     arb_id = capture.capture_arbitration(
         recorder,
         run_id,
-        finding_id=None,
+        finding_id=finding_id,
         bundle_text=bundle_text,
         human_verdict=args.verdict,
         human_rationale=args.rationale,
