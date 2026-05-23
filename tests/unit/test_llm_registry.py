@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import plan_forge.llm  # noqa: F401  # pylint: disable=unused-import
 from plan_forge.llm.client import HealthStatus, LLMResponse
 from plan_forge.llm.mocks import MockClient
 from plan_forge.llm.registry import (
@@ -143,3 +144,15 @@ class TestCachedHealth:
         health = _cached_health(client, cache)
         assert health.auth_ok is True
         cache.set.assert_called_once()
+
+
+class TestProviderRegistration:  # pylint: disable=too-few-public-methods
+    """Verify the four provider client modules register on package import."""
+
+    def test_all_providers_registered_on_import(self):
+        """Importing plan_forge.llm fires all @register decorators."""
+        expected = {"anthropic", "deepseek", "kimi", "mimo"}
+        registered = set(list_registered())
+        assert expected.issubset(registered), (
+            f"Missing providers: {expected - registered}"
+        )
