@@ -85,7 +85,7 @@ def parse_verdict_response(raw_text: str) -> tuple[str, str, list, list]:
                         list(extracted.get("cited_instances") or []),
                         list(extracted.get("search_evidence") or []),
                     )
-            except (json.JSONDecodeError, KeyError):
+            except json.JSONDecodeError:
                 pass
 
     return raw_text, "", [], []
