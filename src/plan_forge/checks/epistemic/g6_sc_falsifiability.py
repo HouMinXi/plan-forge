@@ -10,6 +10,7 @@ import json
 
 from plan_forge.checks.epistemic._evidence import (
     G6_UNVERIFIED,
+    is_genuine_split,
     responses_to_evidence,
     schema_for,
     verdict_matches,
@@ -94,6 +95,23 @@ def check(
                 fix_hint=(
                     "strengthen with concrete observable state"
                     " + detection procedure"
+                ),
+                llm_evidence=evidence,
+            ))
+        elif (
+            vote.status == "indeterminate"
+            and is_genuine_split(vote)
+        ):
+            findings.append(Finding(
+                check_id="G6.B.llm",
+                severity=Severity.ARBITRATION,
+                location=sc.full_id,
+                message=(
+                    "LLM providers split on measurability; "
+                    "needs human arbitration"
+                ),
+                fix_hint=(
+                    "review the per-provider evidence and arbitrate"
                 ),
                 llm_evidence=evidence,
             ))

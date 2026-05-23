@@ -14,6 +14,7 @@ import json
 from plan_forge.checks.epistemic._evidence import (
     G8_UNCERTAIN,
     G8_UNRESOLVABLE,
+    is_genuine_split,
     responses_to_evidence,
     schema_for,
     verdict_matches,
@@ -173,6 +174,23 @@ def check(
                 fix_hint=(
                     "confirm the source manually or provide a "
                     "stronger citation"
+                ),
+                llm_evidence=evidence,
+            ))
+        elif (
+            vote.status == "indeterminate"
+            and is_genuine_split(vote)
+        ):
+            findings.append(Finding(
+                check_id="G8.B.llm",
+                severity=Severity.ARBITRATION,
+                location="External Voices",
+                message=(
+                    f"LLM providers split on citation resolvability:"
+                    f" {citation!r}; needs human arbitration"
+                ),
+                fix_hint=(
+                    "review the per-provider evidence and arbitrate"
                 ),
                 llm_evidence=evidence,
             ))

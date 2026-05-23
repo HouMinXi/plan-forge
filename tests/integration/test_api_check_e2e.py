@@ -2,6 +2,7 @@
 
 Three scenarios: golden path (well_formed.md -> PASS/PASS), a plan missing
 structural sections (VISION/FAIL), and a plan with an orphan SC (FAIL).
+Also includes corpus persistence test for ARBITRATION severity findings.
 """
 from __future__ import annotations
 
@@ -9,6 +10,7 @@ import json
 from pathlib import Path
 
 from plan_forge.api import check
+from plan_forge.corpus import query
 from plan_forge.llm.client import LLMResponse
 from plan_forge.llm.mocks import MockClient
 from plan_forge.verdict import (
@@ -124,3 +126,62 @@ def test_check_fail_plan():
     # FAIL trigger: F1.orphan_sc (HIGH) + G8.A.no_section (BLOCKER);
     # VISION triggers also fire (G1/G3/G5/G7 absent) but FAIL wins.
     assert verdict.epistemic == EpistemicVerdict.FAIL
+
+
+# ---------------------------------------------------------------------------
+# Test 4: corpus persists ARBITRATION severity + gate_id "G6.B"
+# ---------------------------------------------------------------------------
+
+def test_arbitration_finding_persisted_to_corpus(corpus_engine):
+    """Split run persists ARBITRATION findings and evidence to corpus.
+
+    Two MockClients with different verdicts produce ARBITRATION findings.
+    The corpus recorder must store:
+    - findings row with severity="ARBITRATION", check_id="G6.B.llm"
+    - llm_evidence rows with gate_id="G6.B", one per provider (2 rows)
+    """
+    plan_text = _load("g6_pass.md")
+    clients = [
+        _mock_client("mock_a", "VERIFIED"),
+        _mock_client("mock_b", "UNVERIFIED"),
+    ]
+
+    verdict = check(plan_text, llm_clients=clients)
+
+    assert verdict.corpus_run_id is not None, (
+        "corpus recording must succeed with corpus_engine fixture active"
+    )
+
+    # At least one ARBITRATION finding must exist on the split SCs
+    arb_findings = [
+        f for f in verdict.findings
+        if f.severity == Severity.ARBITRATION
+    ]
+    assert len(arb_findings) > 0, (
+        "split clients must produce at least one ARBITRATION finding"
+    )
+
+    # Corpus must have persisted ARBITRATION findings
+    db_findings = query.list_findings(verdict.corpus_run_id)
+    arb_db = [
+        f for f in db_findings
+        if f.severity == "ARBITRATION"
+        and f.check_id == "G6.B.llm"
+    ]
+    assert len(arb_db) > 0, (
+        f"corpus must have findings rows with severity='ARBITRATION' "
+        f"and check_id='G6.B.llm'; got: "
+        f"{[(f.check_id, f.severity) for f in db_findings]}"
+    )
+
+    # Corpus must have persisted llm_evidence rows with gate_id="G6.B"
+    evidence = query.list_evidence(verdict.corpus_run_id, gate_id="G6.B")
+    assert len(evidence) >= 2, (
+        f"corpus must have >=2 evidence rows with gate_id='G6.B' "
+        f"(one per split provider); got {len(evidence)}"
+    )
+    ev_verdicts = {ev.verdict for ev in evidence}
+    assert len(ev_verdicts) >= 2, (
+        f"evidence rows must carry distinct verdicts (the split); "
+        f"got: {ev_verdicts}"
+    )

@@ -34,6 +34,23 @@ def verdict_matches(vote_verdict: str | None, token: str) -> bool:
     return vote_verdict is not None and vote_verdict.strip().upper() == token
 
 
+def is_genuine_split(vote: VoteResult) -> bool:
+    """True when an indeterminate vote is a real disagreement.
+
+    Requires >=2 DISTINCT non-empty verdicts. Verdicts are
+    normalized (strip + upper) to match verdict_matches()'s
+    case-insensitive semantics, and empty/None verdicts (error
+    responses) are filtered so an all-errored vote does not
+    masquerade as a disagreement worth human arbitration.
+    """
+    distinct = {
+        e.verdict.strip().upper()
+        for e in vote.evidences
+        if e.verdict and e.verdict.strip()
+    }
+    return len(distinct) > 1
+
+
 def responses_to_evidence(
     vote: VoteResult,
     llm_clients: list[LLMClient],

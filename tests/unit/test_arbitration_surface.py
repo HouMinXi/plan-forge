@@ -6,6 +6,34 @@ from plan_forge.arbitration.surface import decide_when_to_arbitrate
 from plan_forge.verdict import Finding, LLMEvidence, Severity
 
 
+def _arb_finding(ev_a_verdict: str, ev_b_verdict: str) -> Finding:
+    """Build a Finding with ARBITRATION severity and two evidence entries."""
+    ev_a = LLMEvidence(
+        provider="prov_a",
+        model="model-a",
+        verdict=ev_a_verdict,
+        reasoning="reason a",
+        prompt_version="v0",
+        run_id=0,
+    )
+    ev_b = LLMEvidence(
+        provider="prov_b",
+        model="model-b",
+        verdict=ev_b_verdict,
+        reasoning="reason b",
+        prompt_version="v0",
+        run_id=0,
+    )
+    return Finding(
+        check_id="G6.B.llm",
+        severity=Severity.ARBITRATION,
+        location="SC-1",
+        message="LLM providers split on measurability",
+        fix_hint="review the per-provider evidence and arbitrate",
+        llm_evidence=[ev_a, ev_b],
+    )
+
+
 def _llm_ev(verdict: str, cited: int = 0) -> LLMEvidence:
     """Build a minimal LLMEvidence with the given verdict and citation count."""
     return LLMEvidence(
@@ -144,3 +172,35 @@ def test_return_contract_bool_matches_list(mode, evidences, expect_surface):
     # bool must exactly mirror non-emptiness
     assert should_surface is bool(hits)
     assert should_surface is expect_surface
+
+
+# ---------------------------------------------------------------------------
+# ARBITRATION severity findings and decide_when_to_arbitrate
+# ---------------------------------------------------------------------------
+
+def test_arbitration_finding_on_split_mode_surfaces():
+    """ARBITRATION finding with split evidence -> on_split surfaces it.
+
+    decide_when_to_arbitrate reads ev.verdict on each LLMEvidence entry.
+    The two entries carry different verdicts, so is_split is True.
+    """
+    f = _arb_finding("VERIFIED", "UNVERIFIED")
+    should_surface, hits = decide_when_to_arbitrate([f], "on_split")
+    assert should_surface is True
+    assert hits == [f]
+
+
+def test_arbitration_finding_off_mode_not_surfaced():
+    """ARBITRATION finding -> 'off' mode never surfaces it."""
+    f = _arb_finding("VERIFIED", "UNVERIFIED")
+    should_surface, hits = decide_when_to_arbitrate([f], "off")
+    assert should_surface is False
+    assert hits == []
+
+
+def test_arbitration_finding_always_mode_surfaces():
+    """ARBITRATION finding has llm_evidence -> 'always' surfaces it."""
+    f = _arb_finding("VERIFIED", "UNVERIFIED")
+    should_surface, hits = decide_when_to_arbitrate([f], "always")
+    assert should_surface is True
+    assert hits == [f]

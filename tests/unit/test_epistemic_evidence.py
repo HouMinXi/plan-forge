@@ -5,6 +5,7 @@ import pytest
 
 from plan_forge.checks.epistemic._evidence import (
     G6_VERIFIED,
+    is_genuine_split,
     responses_to_evidence,
     schema_for,
     verdict_matches,
@@ -65,6 +66,56 @@ class TestResponsesToEvidence:
         assert result[1].provider == "prov_b"
         assert result[1].model == "model-b"
         assert result[1].cited_instances == [{"snippet": "x", "issue": "y"}]
+
+
+def _resp(verdict: str) -> LLMResponse:
+    """Build a minimal LLMResponse with the given verdict."""
+    return LLMResponse(
+        verdict=verdict,
+        reasoning="test",
+        cited_instances=[],
+        search_evidence=[],
+        cost_usd=0.0,
+        raw_response={},
+    )
+
+
+def _vote(evidences: list[LLMResponse]) -> VoteResult:
+    """Build a VoteResult with indeterminate status."""
+    return VoteResult(
+        status="indeterminate",
+        verdict=None,
+        evidences=evidences,
+        active_providers=[f"p{i}" for i in range(len(evidences))],
+        threshold=None,
+    )
+
+
+class TestIsGenuineSplit:
+    def test_verified_unverified_is_split(self):
+        """Two distinct non-empty verdicts -> True."""
+        vote = _vote([_resp("VERIFIED"), _resp("UNVERIFIED")])
+        assert is_genuine_split(vote) is True
+
+    def test_same_verdict_different_case_not_split(self):
+        """'verified' vs 'VERIFIED' normalizes to same -> False."""
+        vote = _vote([_resp("verified"), _resp("VERIFIED")])
+        assert is_genuine_split(vote) is False
+
+    def test_one_empty_not_split(self):
+        """One non-empty + one empty verdict -> only one distinct -> False."""
+        vote = _vote([_resp("VERIFIED"), _resp("")])
+        assert is_genuine_split(vote) is False
+
+    def test_both_empty_not_split(self):
+        """Both empty verdicts -> zero distinct -> False."""
+        vote = _vote([_resp(""), _resp("")])
+        assert is_genuine_split(vote) is False
+
+    def test_single_evidence_not_split(self):
+        """Single provider -> one distinct verdict -> False."""
+        vote = _vote([_resp("VERIFIED")])
+        assert is_genuine_split(vote) is False
 
 
 class TestSchemaFor:

@@ -306,3 +306,60 @@ def test_check_id_prefix_invariant():
         f"check_id prefix invariant violated: non-vision gate emits vision-prefixed "
         f"check_ids {violations}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Advisory lock: ARBITRATION must never flip engineering or epistemic to FAIL
+# ---------------------------------------------------------------------------
+
+def test_arbitration_severity_not_in_engineering_fail_set():
+    """Severity.ARBITRATION must not appear in _compute_engineering fail set.
+
+    _compute_engineering uses {Severity.BLOCKER, Severity.HIGH}. If
+    ARBITRATION were added, advisory split findings would flip
+    engineering to FAIL, defeating the advisory-only design.
+    """
+    eng_fail = {Severity.BLOCKER, Severity.HIGH}
+    assert Severity.ARBITRATION not in eng_fail
+
+
+def test_arbitration_severity_not_in_epistemic_fail_set():
+    """Severity.ARBITRATION must not appear in _compute_epistemic serious set.
+
+    _compute_epistemic uses serious = (Severity.BLOCKER, Severity.HIGH).
+    """
+    epi_serious = (Severity.BLOCKER, Severity.HIGH)
+    assert Severity.ARBITRATION not in epi_serious
+
+
+def test_compute_engineering_arbitration_only_plan_passes():
+    """A plan with only an ARBITRATION finding -> engineering PASS."""
+    findings = [
+        _finding("G6.B.llm", Severity.ARBITRATION),
+    ]
+    from plan_forge.api import _compute_engineering
+    result = _compute_engineering(findings)
+    assert result == EngineeringVerdict.PASS, (
+        "ARBITRATION-only findings must yield engineering PASS; "
+        f"got {result!r}"
+    )
+
+
+def test_compute_epistemic_arbitration_only_plan_not_fail():
+    """A plan with only an ARBITRATION finding -> epistemic PASS or VISION.
+
+    ARBITRATION is below the 'serious' threshold (BLOCKER/HIGH), so it
+    triggers neither the FAIL path nor the VISION path. Epistemic -> PASS.
+    """
+    findings = [
+        _finding("G6.B.llm", Severity.ARBITRATION),
+    ]
+    result = _compute_epistemic(findings)
+    assert result != EpistemicVerdict.FAIL, (
+        "ARBITRATION-only plan must not produce epistemic FAIL; "
+        f"got {result!r}"
+    )
+    assert result == EpistemicVerdict.PASS, (
+        "ARBITRATION-only plan with no vision or fail triggers -> PASS; "
+        f"got {result!r}"
+    )

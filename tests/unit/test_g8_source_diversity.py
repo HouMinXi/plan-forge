@@ -125,3 +125,54 @@ class TestG8PartB:
         llm = [f for f in findings
                if f.check_id.startswith("G8.B")]
         assert len(llm) == 0
+
+    def test_split_emits_arbitration(self):
+        """Two clients split on citation -> ARBITRATION finding."""
+        parsed = parse(_load_fixture("g8_pass.md"))
+        clients = [
+            _mock_client("mock_a", "RESOLVED_BY_KNOWLEDGE"),
+            _mock_client("mock_b", "UNRESOLVABLE"),
+        ]
+        findings = check(parsed, clients)
+        arb = [
+            f for f in findings
+            if f.check_id == "G8.B.llm"
+            and f.severity == Severity.ARBITRATION
+        ]
+        assert len(arb) == 1
+        assert arb[0].severity == Severity.ARBITRATION
+        assert "arbitration" in arb[0].message
+
+    def test_split_arbitration_evidence_has_two_entries(self):
+        """Split finding carries evidence from both providers."""
+        parsed = parse(_load_fixture("g8_pass.md"))
+        clients = [
+            _mock_client("mock_a", "RESOLVED_BY_KNOWLEDGE"),
+            _mock_client("mock_b", "UNRESOLVABLE"),
+        ]
+        findings = check(parsed, clients)
+        arb = [
+            f for f in findings
+            if f.check_id == "G8.B.llm"
+            and f.severity == Severity.ARBITRATION
+        ]
+        assert len(arb) > 0
+        ev = arb[0].llm_evidence
+        assert len(ev) == 2
+        verdicts = {e.verdict for e in ev}
+        assert "RESOLVED_BY_KNOWLEDGE" in verdicts
+        assert "UNRESOLVABLE" in verdicts
+
+    def test_consensus_no_arbitration(self):
+        """Both agree on RESOLVED -> no ARBITRATION finding."""
+        parsed = parse(_load_fixture("g8_pass.md"))
+        clients = [
+            _mock_client("mock_a", "RESOLVED_BY_KNOWLEDGE"),
+            _mock_client("mock_b", "RESOLVED_BY_KNOWLEDGE"),
+        ]
+        findings = check(parsed, clients)
+        arb = [
+            f for f in findings
+            if f.severity == Severity.ARBITRATION
+        ]
+        assert arb == []
