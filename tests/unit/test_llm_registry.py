@@ -53,7 +53,7 @@ class TestRegisterDecorator:
 
 
 class TestBuildActiveList:
-    def _make_cache(self, healthy=True):
+    def _make_cache(self):
         """Return a mock CacheBackend that returns no cached health."""
         cache = MagicMock()
         cache.get.return_value = None  # no cached health -> probe
@@ -90,7 +90,9 @@ class TestBuildActiveList:
                 return LLMResponse(verdict="ok", reasoning="")
 
         creds = MagicMock()
-        creds.get_pool.side_effect = lambda p: ["fake-key"] if p in ("good_prov", "bad_prov") else []
+        creds.get_pool.side_effect = (
+            lambda p: ["fake-key"] if p in ("good_prov", "bad_prov") else []
+        )
         cache = self._make_cache()
 
         active = build_active_list(credentials=creds, cache=cache)
@@ -162,6 +164,8 @@ class TestCachedHealth:
         # Re-probe must have happened and returned the fresh True result
         assert health.auth_ok is True
         cache.set.assert_called_once()
+        written = cache.set.call_args[0][1]
+        assert written["auth_ok"] is True
 
     def test_recent_failure_uses_cache(self):
         """A cached auth_ok=False younger than 1h must NOT trigger a probe."""
