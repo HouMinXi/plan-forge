@@ -6,8 +6,9 @@ health check (auth_ok=True).
 
 Health check results are cached in llm_cache with key
 "health:<provider>:<model>" using ttl_class="never_expire".  The cache
-entry is invalidated only by explicit invalidate() calls; a 7-day
-staleness check at read time triggers a fresh probe.
+entry is invalidated only by explicit invalidate() calls.  A staleness
+check at read time triggers a fresh probe: 7 days for successful checks
+(auth_ok=True), 1 hour for failed checks (auth_ok=False).
 
 Note: _cached_health logic kept here (< 30 lines); no separate health.py.
 """
@@ -72,7 +73,10 @@ def build_active_list(
 
 
 def _cached_health(client: LLMClient, cache) -> HealthStatus:
-    """Return cached health status if fresh (< 7 days); else probe and cache."""
+    """Return cached health status if still fresh; else probe and cache.
+
+    Fresh window: 7 days for auth_ok=True, 1 hour for auth_ok=False.
+    """
     key = f"health:{client.name}:{client.model}"
     cached = cache.get(key)
     if cached:
@@ -85,7 +89,12 @@ def _cached_health(client: LLMClient, cache) -> HealthStatus:
             # Normalise naive -> UTC (SQLite stores without tz)
             if last.tzinfo is None:
                 last = last.replace(tzinfo=timezone.utc)
-            if datetime.now(timezone.utc) - last < timedelta(days=7):
+            max_age = (
+                timedelta(days=7)
+                if cached.get("auth_ok")
+                else timedelta(hours=1)
+            )
+            if datetime.now(timezone.utc) - last < max_age:
                 return HealthStatus(
                     auth_ok=cached["auth_ok"],
                     tool_use_ok=cached["tool_use_ok"],

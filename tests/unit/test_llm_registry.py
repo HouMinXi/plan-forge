@@ -1,11 +1,12 @@
 """Tests for llm/registry.py."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
 import pytest
 
+import plan_forge.llm  # noqa: F401  # pylint: disable=unused-import
 from plan_forge.llm.client import HealthStatus, LLMResponse
 from plan_forge.llm.mocks import MockClient
 from plan_forge.llm.registry import (
@@ -52,7 +53,7 @@ class TestRegisterDecorator:
 
 
 class TestBuildActiveList:
-    def _make_cache(self, healthy=True):
+    def _make_cache(self):
         """Return a mock CacheBackend that returns no cached health."""
         cache = MagicMock()
         cache.get.return_value = None  # no cached health -> probe
@@ -89,7 +90,9 @@ class TestBuildActiveList:
                 return LLMResponse(verdict="ok", reasoning="")
 
         creds = MagicMock()
-        creds.get_pool.side_effect = lambda p: ["fake-key"] if p in ("good_prov", "bad_prov") else []
+        creds.get_pool.side_effect = (
+            lambda p: ["fake-key"] if p in ("good_prov", "bad_prov") else []
+        )
         cache = self._make_cache()
 
         active = build_active_list(credentials=creds, cache=cache)
@@ -143,3 +146,68 @@ class TestCachedHealth:
         health = _cached_health(client, cache)
         assert health.auth_ok is True
         cache.set.assert_called_once()
+
+    def test_stale_failure_triggers_reprobe(self):
+        """A cached auth_ok=False older than 1h must trigger a fresh probe."""
+        now = datetime.now(timezone.utc)
+        two_hours_ago = now - timedelta(hours=2)
+        cache = MagicMock()
+        cache.get.return_value = {
+            "auth_ok": False,
+            "tool_use_ok": False,
+            "last_checked": two_hours_ago.isoformat(),
+            "error": "timeout",
+        }
+        # MockClient returns auth_ok=True by default (fresh probe is healthy)
+        client = MockClient(name="c3", responses={})
+        health = _cached_health(client, cache)
+        # Re-probe must have happened and returned the fresh True result
+        assert health.auth_ok is True
+        cache.set.assert_called_once()
+        written = cache.set.call_args[0][1]
+        assert written["auth_ok"] is True
+
+    def test_recent_failure_uses_cache(self):
+        """A cached auth_ok=False younger than 1h must NOT trigger a probe."""
+        now = datetime.now(timezone.utc)
+        thirty_min_ago = now - timedelta(minutes=30)
+        cache = MagicMock()
+        cache.get.return_value = {
+            "auth_ok": False,
+            "tool_use_ok": False,
+            "last_checked": thirty_min_ago.isoformat(),
+            "error": "timeout",
+        }
+        client = MockClient(name="c4", responses={})
+        health = _cached_health(client, cache)
+        # Must return the stale cached value without probing
+        assert health.auth_ok is False
+        cache.set.assert_not_called()
+
+    def test_recent_success_uses_cache(self):
+        """A cached auth_ok=True from 2h ago must still use cache (7-day TTL)."""
+        now = datetime.now(timezone.utc)
+        two_hours_ago = now - timedelta(hours=2)
+        cache = MagicMock()
+        cache.get.return_value = {
+            "auth_ok": True,
+            "tool_use_ok": True,
+            "last_checked": two_hours_ago.isoformat(),
+            "error": None,
+        }
+        client = MockClient(name="c5", responses={})
+        health = _cached_health(client, cache)
+        assert health.auth_ok is True
+        cache.set.assert_not_called()
+
+
+class TestProviderRegistration:  # pylint: disable=too-few-public-methods
+    """Verify the four provider client modules register on package import."""
+
+    def test_all_providers_registered_on_import(self):
+        """Importing plan_forge.llm fires all @register decorators."""
+        expected = {"anthropic", "deepseek", "kimi", "mimo"}
+        registered = set(list_registered())
+        assert expected.issubset(registered), (
+            f"Missing providers: {expected - registered}"
+        )
