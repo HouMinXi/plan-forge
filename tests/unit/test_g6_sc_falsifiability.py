@@ -94,18 +94,93 @@ class TestG6PartB:
                if f.check_id.startswith("G6.B")]
         assert len(llm) == 0
 
-    def test_indeterminate_not_counted(self):
-        """Split votes -> indeterminate -> verdict_matches False."""
+    def test_split_emits_arbitration(self):
+        """Two clients with different verdicts -> ARBITRATION finding."""
         parsed = parse(_load_fixture("g6_pass.md"))
-        # Two clients with different verdicts -> indeterminate
         clients = [
             _mock_client("mock_a", "VERIFIED"),
             _mock_client("mock_b", "UNVERIFIED"),
         ]
         findings = check(parsed, clients)
-        llm = [f for f in findings if f.check_id == "G6.B.llm"]
-        # indeterminate -> vote.verdict is None -> not counted
-        assert len(llm) == 0
+        arb = [
+            f for f in findings
+            if f.check_id == "G6.B.llm"
+            and f.severity == Severity.ARBITRATION
+        ]
+        # g6_pass.md has 3 SCs -> 3 ARBITRATION findings
+        assert len(arb) == 3
+        assert all(f.severity == Severity.ARBITRATION for f in arb)
+
+    def test_split_arbitration_evidence_has_two_entries(self):
+        """Split finding carries evidence from both providers."""
+        parsed = parse(_load_fixture("g6_pass.md"))
+        clients = [
+            _mock_client("mock_a", "VERIFIED"),
+            _mock_client("mock_b", "UNVERIFIED"),
+        ]
+        findings = check(parsed, clients)
+        arb = [
+            f for f in findings
+            if f.check_id == "G6.B.llm"
+            and f.severity == Severity.ARBITRATION
+        ]
+        assert len(arb) > 0
+        ev = arb[0].llm_evidence
+        assert len(ev) == 2
+        verdicts = {e.verdict for e in ev}
+        assert "VERIFIED" in verdicts
+        assert "UNVERIFIED" in verdicts
+
+    def test_split_does_not_increment_unverified_count(self):
+        """Split -> ARBITRATION, not counted as UNVERIFIED.
+
+        g6_pass.md has 3 SCs. If split incremented unverified_count,
+        3/3 > 30% would fire the aggregate BLOCKER. It must not.
+        """
+        parsed = parse(_load_fixture("g6_pass.md"))
+        clients = [
+            _mock_client("mock_a", "VERIFIED"),
+            _mock_client("mock_b", "UNVERIFIED"),
+        ]
+        findings = check(parsed, clients)
+        agg = [f for f in findings if f.check_id == "G6.B.aggregate"]
+        assert len(agg) == 0, (
+            "split must not contribute to unverified_count; "
+            "no aggregate BLOCKER expected"
+        )
+
+    def test_consensus_no_arbitration(self):
+        """Both clients agree -> consensus path, no ARBITRATION finding."""
+        parsed = parse(_load_fixture("g6_pass.md"))
+        clients = [
+            _mock_client("mock_a", "VERIFIED"),
+            _mock_client("mock_b", "VERIFIED"),
+        ]
+        findings = check(parsed, clients)
+        arb = [
+            f for f in findings
+            if f.severity == Severity.ARBITRATION
+        ]
+        assert arb == [], (
+            "consensus vote must not produce ARBITRATION findings"
+        )
+
+    def test_all_errored_no_arbitration(self):
+        """Both clients return empty verdict -> not a genuine split."""
+        parsed = parse(_load_fixture("g6_pass.md"))
+        clients = [
+            _mock_client("mock_a", ""),
+            _mock_client("mock_b", ""),
+        ]
+        findings = check(parsed, clients)
+        arb = [
+            f for f in findings
+            if f.severity == Severity.ARBITRATION
+        ]
+        assert arb == [], (
+            "all-errored (empty) verdicts must not produce "
+            "ARBITRATION findings"
+        )
 
     def test_evidence_attached_to_finding(self):
         """Finding.llm_evidence populated with correct provider/model."""

@@ -306,3 +306,40 @@ def test_check_id_prefix_invariant():
         f"check_id prefix invariant violated: non-vision gate emits vision-prefixed "
         f"check_ids {violations}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Advisory lock: ARBITRATION must never flip engineering or epistemic to FAIL
+# ---------------------------------------------------------------------------
+
+def test_compute_engineering_arbitration_only_plan_passes():
+    """A plan with only an ARBITRATION finding -> engineering PASS."""
+    findings = [
+        _finding("G6.B.llm", Severity.ARBITRATION),
+    ]
+    from plan_forge.api import _compute_engineering
+    result = _compute_engineering(findings)
+    assert result == EngineeringVerdict.PASS, (
+        "ARBITRATION-only findings must yield engineering PASS; "
+        f"got {result!r}"
+    )
+
+
+def test_compute_epistemic_arbitration_only_plan_not_fail():
+    """A plan with only an ARBITRATION finding -> epistemic PASS or VISION.
+
+    ARBITRATION is below the 'serious' threshold (BLOCKER/HIGH), so it
+    triggers neither the FAIL path nor the VISION path. Epistemic -> PASS.
+    """
+    findings = [
+        _finding("G6.B.llm", Severity.ARBITRATION),
+    ]
+    result = _compute_epistemic(findings)
+    assert result != EpistemicVerdict.FAIL, (
+        "ARBITRATION-only plan must not produce epistemic FAIL; "
+        f"got {result!r}"
+    )
+    assert result == EpistemicVerdict.PASS, (
+        "ARBITRATION-only plan with no vision or fail triggers -> PASS; "
+        f"got {result!r}"
+    )

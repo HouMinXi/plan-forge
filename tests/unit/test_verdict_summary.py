@@ -34,6 +34,7 @@ def test_summary_format_pass_verdict():
     assert "HIGH: 0" in result
     assert "MEDIUM: 0" in result
     assert "LOW: 0" in result
+    assert "ARBITRATION: 0" in result
     # No LLM providers line when active_providers is empty
     assert "LLM providers:" not in result
 
@@ -113,5 +114,53 @@ def test_summary_multiline():
         epistemic=EpistemicVerdict.PASS,
     )
     lines = v.summary().split("\n")
-    # Minimum 7 lines: Engineering, Epistemic, Findings total, 4 severity lines
-    assert len(lines) >= 7
+    # Minimum 8 lines: Engineering, Epistemic, Findings total,
+    # 4 ranked severity lines, 1 ARBITRATION line
+    assert len(lines) >= 8
+
+
+def test_summary_arbitration_line_present():
+    """summary() includes ARBITRATION count line after LOW."""
+    v = Verdict(
+        engineering=EngineeringVerdict.PASS,
+        epistemic=EpistemicVerdict.PASS,
+    )
+    result = v.summary()
+    assert "ARBITRATION: 0" in result
+
+
+def test_summary_arbitration_count():
+    """summary() counts ARBITRATION findings correctly."""
+    findings = [
+        _finding("G6.B.llm", Severity.ARBITRATION),
+        _finding("G8.B.llm", Severity.ARBITRATION),
+    ]
+    v = Verdict(
+        engineering=EngineeringVerdict.PASS,
+        epistemic=EpistemicVerdict.PASS,
+        findings=findings,
+    )
+    result = v.summary()
+    assert "ARBITRATION: 2" in result
+    # ARBITRATION findings do not appear in ranked severity counts
+    assert "BLOCKER: 0" in result
+    assert "HIGH: 0" in result
+
+
+def test_summary_arbitration_after_low():
+    """ARBITRATION line appears after LOW in summary output."""
+    v = Verdict(
+        engineering=EngineeringVerdict.PASS,
+        epistemic=EpistemicVerdict.PASS,
+    )
+    result = v.summary()
+    lines = result.split("\n")
+    low_idx = next(
+        i for i, ln in enumerate(lines) if "LOW:" in ln
+    )
+    arb_idx = next(
+        i for i, ln in enumerate(lines) if "ARBITRATION:" in ln
+    )
+    assert arb_idx > low_idx, (
+        "ARBITRATION line must appear after LOW line in summary()"
+    )

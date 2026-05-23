@@ -12,12 +12,17 @@ from enum import Enum
 class Severity(str, Enum):
     """Finding severity levels.
 
-    No INFO level -- only BLOCKER/HIGH/MEDIUM/LOW.
+    BLOCKER/HIGH/MEDIUM/LOW are the four ranked levels.
+    ARBITRATION is an advisory severity: it never affects the
+    engineering or epistemic verdict. It exists only to route a
+    finding to the arbitration surface when two LLM providers
+    disagree and a human needs to arbitrate.
     """
     BLOCKER = "BLOCKER"
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
+    ARBITRATION = "ARBITRATION"
 
 
 class EngineeringVerdict(str, Enum):
@@ -131,6 +136,7 @@ class Verdict:
             f"  HIGH: {counts[Severity.HIGH]}",
             f"  MEDIUM: {counts[Severity.MEDIUM]}",
             f"  LOW: {counts[Severity.LOW]}",
+            f"  ARBITRATION: {counts[Severity.ARBITRATION]}",
         ]
         if self.active_providers:
             lines.append(f"LLM providers: {', '.join(self.active_providers)}")

@@ -15,8 +15,8 @@ from plan_forge.verdict import (
 # -------------------------------------------------------------------
 
 def test_severity_values():
-    """Severity has exactly BLOCKER/HIGH/MEDIUM/LOW -- no INFO."""
-    expected = {"BLOCKER", "HIGH", "MEDIUM", "LOW"}
+    """Severity has BLOCKER/HIGH/MEDIUM/LOW/ARBITRATION."""
+    expected = {"BLOCKER", "HIGH", "MEDIUM", "LOW", "ARBITRATION"}
     actual = {s.value for s in Severity}
     assert actual == expected
 
@@ -25,6 +25,26 @@ def test_severity_no_info():
     """INFO is deliberately absent from Severity."""
     names = {s.name for s in Severity}
     assert "INFO" not in names
+
+
+def test_severity_arbitration_present():
+    """ARBITRATION member exists and is a str enum value."""
+    assert hasattr(Severity, "ARBITRATION")
+    assert Severity.ARBITRATION.value == "ARBITRATION"
+    assert isinstance(Severity.ARBITRATION, str)
+
+
+def test_severity_arbitration_not_in_fail_sets():
+    """ARBITRATION must not appear in the engineering or epistemic fail sets.
+
+    _compute_engineering uses {Severity.BLOCKER, Severity.HIGH}.
+    _compute_epistemic uses (Severity.BLOCKER, Severity.HIGH).
+    ARBITRATION in either would flip advisory findings into FAIL.
+    """
+    eng_fail = {Severity.BLOCKER, Severity.HIGH}
+    epi_fail = (Severity.BLOCKER, Severity.HIGH)
+    assert Severity.ARBITRATION not in eng_fail
+    assert Severity.ARBITRATION not in epi_fail
 
 
 def test_severity_is_str():
