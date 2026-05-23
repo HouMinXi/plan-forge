@@ -424,3 +424,113 @@ def test_skill_md_frontmatter_and_ascii():
             ).strip()
     assert fm.get("name") == "plan-forge"
     assert fm.get("description", "").strip() != ""
+
+
+def test_analyze_includes_finding_id(capsys, corpus_engine, monkeypatch):
+    """Corpus-active check() with finding_id -> candidate includes it."""
+    fake = _fake_verdict_split()
+    fake.findings[0].finding_id = 42
+    fake = Verdict(
+        engineering=fake.engineering,
+        epistemic=fake.epistemic,
+        findings=fake.findings,
+        corpus_run_id=1,
+    )
+
+    def _mock_check(plan_text, **kwargs):
+        return fake
+
+    monkeypatch.setattr("plan_forge.api.check", _mock_check)
+
+    rc = runner.main([
+        "analyze",
+        "--plan-path", _plan_path("f1_pass.md"),
+        "--arbitration-mode", "on_split_evidence_rich",
+    ])
+    out = _parsed(capsys.readouterr().out)
+    assert rc == 0
+    assert len(out["arbitration_candidates"]) == 1
+    c = out["arbitration_candidates"][0]
+    assert c["finding_id"] == 42
+    if out["session_file"]:
+        os.unlink(out["session_file"])
+
+
+def test_capture_with_finding_id(capsys, corpus_engine):
+    """Candidate with finding_id -> arbitration row links it."""
+    from plan_forge.corpus.record import CorpusRecorder
+    from plan_forge.verdict import Finding, Severity
+
+    class _FakePlan:
+        raw_text = "# Plan\nsome text"
+
+    rec = CorpusRecorder()
+    run_id = rec.start_run(_FakePlan(), None, "0.0.0", "off", 0.0)
+
+    finding = Finding(
+        check_id="G6.A",
+        severity=Severity.HIGH,
+        location="plan.md:1",
+        message="test finding",
+    )
+    real_finding_id = rec.record_finding(run_id, finding)
+
+    bundle_text = "## Finding\nsome evidence"
+    candidates = [
+        {
+            "index": 0,
+            "check_id": "G6.A",
+            "location": "plan.md:1",
+            "bundle_text": bundle_text,
+            "finding_id": real_finding_id,
+        }
+    ]
+    sf = _write_session(run_id, candidates)
+
+    rc = runner.main([
+        "capture",
+        "--session-file", sf,
+        "--index", "0",
+        "--verdict", "verified",
+    ])
+    out = _parsed(capsys.readouterr().out)
+    assert rc == 0
+    arb_id = out["arbitration_id"]
+    row = _row(corpus_engine, arb_id)
+    assert row.finding_id == real_finding_id
+    os.unlink(sf)
+
+
+def test_capture_without_finding_id(capsys, corpus_engine):
+    """Candidate missing finding_id -> arbitration row None."""
+    from plan_forge.corpus.record import CorpusRecorder
+
+    class _FakePlan:
+        raw_text = "# Plan\nsome text"
+
+    rec = CorpusRecorder()
+    run_id = rec.start_run(_FakePlan(), None, "0.0.0", "off", 0.0)
+
+    bundle_text = "## Finding\nsome evidence"
+    candidates = [
+        {
+            "index": 0,
+            "check_id": "G6.A",
+            "location": "plan.md:1",
+            "bundle_text": bundle_text,
+        }
+    ]
+    sf = _write_session(run_id, candidates)
+
+    rc = runner.main([
+        "capture",
+        "--session-file", sf,
+        "--index", "0",
+        "--verdict", "verified",
+    ])
+    out = _parsed(capsys.readouterr().out)
+    assert rc == 0
+    arb_id = out["arbitration_id"]
+    row = _row(corpus_engine, arb_id)
+    assert row.finding_id is None
+    os.unlink(sf)
