@@ -21,3 +21,4 @@ env/
 .worktrees/
 .planning/SCRATCH/
 *.db
+CLAUDE.md
