@@ -50,15 +50,45 @@ def parse_verdict_response(raw_text: str) -> tuple[str, str, list, list]:
     try:
         data = json.loads(text)
     except (json.JSONDecodeError, ValueError):
-        return raw_text, "", [], []
-    if not isinstance(data, dict) or "verdict" not in data:
-        return raw_text, "", [], []
-    return (
-        str(data["verdict"]),
-        str(data.get("reason", "")),
-        list(data.get("cited_instances") or []),
-        list(data.get("search_evidence") or []),
-    )
+        data = None
+
+    if isinstance(data, dict) and "verdict" in data:
+        return (
+            str(data["verdict"]),
+            str(data.get("reason", "")),
+            list(data.get("cited_instances") or []),
+            list(data.get("search_evidence") or []),
+        )
+
+    # Backstop: extract the last balanced {...} block from prose output.
+    # Uses brace-counting to avoid greedy-regex pitfalls.
+    stripped = raw_text.rstrip()
+    last_brace = stripped.rfind("}")
+    if last_brace >= 0:
+        depth = 0
+        start = None
+        for i in range(last_brace, -1, -1):
+            if stripped[i] == "}":
+                depth += 1
+            elif stripped[i] == "{":
+                depth -= 1
+                if depth == 0:
+                    start = i
+                    break
+        if start is not None:
+            try:
+                extracted = json.loads(stripped[start:last_brace + 1])
+                if isinstance(extracted, dict) and "verdict" in extracted:
+                    return (
+                        str(extracted["verdict"]),
+                        str(extracted.get("reason", "")),
+                        list(extracted.get("cited_instances") or []),
+                        list(extracted.get("search_evidence") or []),
+                    )
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+    return raw_text, "", [], []
 
 
 def cache_key(cache_key_inputs: dict, provider: str, model: str,
