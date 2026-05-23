@@ -1227,9 +1227,9 @@ class CorpusRecorder:
         run_id: int,
         finding_id: int | None,
         bundle_text: str,
-        human_verdict: str,
-        human_rationale: str,
-        overrode_llm: bool,
+        human_verdict: str | None,
+        human_rationale: str | None,
+        overrode_llm: bool | None,
     ) -> int:
         """Append-only insert into arbitrations."""
 
