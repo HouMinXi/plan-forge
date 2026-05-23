@@ -131,6 +131,20 @@ class TestSchemaFor:
         # MIMO_WEB_SEARCH_TOOL is None
         assert schema_for("mimo") is None
 
+    def test_deepseek_returns_none(self):
+        # deepseek uses the openai SDK with no tool-call loop;
+        # schema None makes it answer directly.
+        assert schema_for("deepseek") is None
+
+    def test_kimi_returns_none(self):
+        # kimi uses the openai SDK with no tool-call loop;
+        # schema None makes it answer directly.
+        assert schema_for("kimi") is None
+
+    def test_anthropic_not_none_regression(self):
+        # anthropic's web_search is server-side; must stay non-None.
+        assert schema_for("anthropic") is not None
+
 
 class TestPromptLoader:
     def test_loads_existing(self, tmp_path):

@@ -88,14 +88,14 @@ class KimiClient:
         if cached is not None:
             return LLMResponse(**cached)
 
-        schema = tool_use_schema if tool_use_schema is not None else KIMI_WEB_SEARCH_TOOL
+        # Send tools only when a schema is given; None means plain chat.
+        messages = [{"role": "user", "content": prompt}]
+        kwargs: dict = {"model": self.model, "max_tokens": 1024,
+                        "messages": messages}
+        if tool_use_schema is not None:
+            kwargs["tools"] = [tool_use_schema]
         try:
-            raw = self._client.chat.completions.create(
-                model=self.model,
-                max_tokens=1024,
-                tools=[schema],
-                messages=[{"role": "user", "content": prompt}],
-            )
+            raw = self._client.chat.completions.create(**kwargs)
         except Exception as exc:
             raise RuntimeError(f"kimi call failed: {exc}") from exc
 

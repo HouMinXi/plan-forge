@@ -20,11 +20,20 @@ G8_RESOLVED_BY_KNOWLEDGE = "RESOLVED_BY_KNOWLEDGE"
 G8_UNCERTAIN = "UNCERTAIN"
 G8_UNRESOLVABLE = "UNRESOLVABLE"
 
-# Provider -> web-search tool schema lookup (tool_use.py is read-only)
+# Provider -> web-search tool schema lookup (tool_use.py is read-only).
+#
+# openai-SDK clients (kimi, deepseek) make a single completion call with no
+# client-side tool-result loop.  Giving them a tool schema makes the model
+# stall on a tool_call instead of returning a verdict.  They answer directly
+# when schema is None, like mimo.
+#
+# anthropic's web_search is server-side: the API executes the search and
+# returns result blocks alongside the final text; call() reads both.  No
+# client-side loop is needed, so the tool stays.
 _TOOL_BY_PROVIDER = {
     "anthropic": tool_use.ANTHROPIC_WEB_SEARCH_TOOL,
-    "kimi": tool_use.KIMI_WEB_SEARCH_TOOL,
-    "deepseek": tool_use.DEEPSEEK_WEB_SEARCH_TOOL,
+    "kimi": None,      # openai SDK, no tool-call loop; answers direct
+    "deepseek": None,  # openai SDK, no tool-call loop; answers direct
     "mimo": tool_use.MIMO_WEB_SEARCH_TOOL,  # None -> no tool_use
 }
 

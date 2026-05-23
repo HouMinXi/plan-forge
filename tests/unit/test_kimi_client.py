@@ -123,6 +123,54 @@ class TestKimiJsonParse:
             assert resp.reasoning == "bad"
 
 
+class TestKimiNoToolsWhenSchemaNone:
+    """Bug-injection: call(schema=None) must send no tools parameter.
+
+    Old code substituted KIMI_WEB_SEARCH_TOOL unconditionally, so this
+    test fails on the pre-fix client and passes after the fix.
+    """
+
+    def test_none_schema_sends_no_tools(self):
+        with patch("plan_forge.llm.kimi_client.openai.OpenAI") as mock_cls:
+            sdk = MagicMock()
+            mock_cls.return_value = sdk
+            sdk.chat.completions.create.return_value = _stub_choice("PASS")
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = KimiClient(api_key="fake")
+            c._cache = cache
+
+            c.call("prompt", tool_use_schema=None,
+                   cache_key_inputs={"t": "no-tools"})
+
+            call_kwargs = sdk.chat.completions.create.call_args
+            # tools must be absent or None when schema is not given
+            assert "tools" not in call_kwargs.kwargs, (
+                "expected no tools kwarg when tool_use_schema=None"
+            )
+
+    def test_non_none_schema_sends_tools(self):
+        """Sanity check: a real schema still gets forwarded."""
+        schema = {"type": "function", "function": {"name": "test_tool"}}
+        with patch("plan_forge.llm.kimi_client.openai.OpenAI") as mock_cls:
+            sdk = MagicMock()
+            mock_cls.return_value = sdk
+            sdk.chat.completions.create.return_value = _stub_choice("PASS")
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = KimiClient(api_key="fake")
+            c._cache = cache
+
+            c.call("prompt", tool_use_schema=schema,
+                   cache_key_inputs={"t": "with-tools"})
+
+            call_kwargs = sdk.chat.completions.create.call_args
+            assert "tools" in call_kwargs.kwargs
+            assert call_kwargs.kwargs["tools"] == [schema]
+
+
 @pytest.mark.live
 def test_kimi_call_live():
     import os
