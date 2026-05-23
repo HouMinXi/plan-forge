@@ -1,7 +1,7 @@
 """Tests for llm/registry.py."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
 import pytest
@@ -144,6 +144,57 @@ class TestCachedHealth:
         health = _cached_health(client, cache)
         assert health.auth_ok is True
         cache.set.assert_called_once()
+
+    def test_stale_failure_triggers_reprobe(self):
+        """A cached auth_ok=False older than 1h must trigger a fresh probe."""
+        now = datetime.now(timezone.utc)
+        two_hours_ago = now - timedelta(hours=2)
+        cache = MagicMock()
+        cache.get.return_value = {
+            "auth_ok": False,
+            "tool_use_ok": False,
+            "last_checked": two_hours_ago.isoformat(),
+            "error": "timeout",
+        }
+        # MockClient returns auth_ok=True by default (fresh probe is healthy)
+        client = MockClient(name="c3", responses={})
+        health = _cached_health(client, cache)
+        # Re-probe must have happened and returned the fresh True result
+        assert health.auth_ok is True
+        cache.set.assert_called_once()
+
+    def test_recent_failure_uses_cache(self):
+        """A cached auth_ok=False younger than 1h must NOT trigger a probe."""
+        now = datetime.now(timezone.utc)
+        thirty_min_ago = now - timedelta(minutes=30)
+        cache = MagicMock()
+        cache.get.return_value = {
+            "auth_ok": False,
+            "tool_use_ok": False,
+            "last_checked": thirty_min_ago.isoformat(),
+            "error": "timeout",
+        }
+        client = MockClient(name="c4", responses={})
+        health = _cached_health(client, cache)
+        # Must return the stale cached value without probing
+        assert health.auth_ok is False
+        cache.set.assert_not_called()
+
+    def test_recent_success_uses_cache(self):
+        """A cached auth_ok=True from 2h ago must still use cache (7-day TTL)."""
+        now = datetime.now(timezone.utc)
+        two_hours_ago = now - timedelta(hours=2)
+        cache = MagicMock()
+        cache.get.return_value = {
+            "auth_ok": True,
+            "tool_use_ok": True,
+            "last_checked": two_hours_ago.isoformat(),
+            "error": None,
+        }
+        client = MockClient(name="c5", responses={})
+        health = _cached_health(client, cache)
+        assert health.auth_ok is True
+        cache.set.assert_not_called()
 
 
 class TestProviderRegistration:  # pylint: disable=too-few-public-methods

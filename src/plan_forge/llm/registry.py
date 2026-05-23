@@ -85,7 +85,12 @@ def _cached_health(client: LLMClient, cache) -> HealthStatus:
             # Normalise naive -> UTC (SQLite stores without tz)
             if last.tzinfo is None:
                 last = last.replace(tzinfo=timezone.utc)
-            if datetime.now(timezone.utc) - last < timedelta(days=7):
+            max_age = (
+                timedelta(days=7)
+                if cached.get("auth_ok")
+                else timedelta(hours=1)
+            )
+            if datetime.now(timezone.utc) - last < max_age:
                 return HealthStatus(
                     auth_ok=cached["auth_ok"],
                     tool_use_ok=cached["tool_use_ok"],
