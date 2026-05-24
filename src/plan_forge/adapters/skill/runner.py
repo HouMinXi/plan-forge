@@ -10,6 +10,7 @@ import tempfile
 from plan_forge import api
 from plan_forge import parser
 from plan_forge.arbitration import surface, bundle, capture
+from plan_forge.checks.epistemic._evidence import _validate_evidence
 from plan_forge.corpus.record import CorpusRecorder
 
 
@@ -33,6 +34,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "--mechanical-only",
         action="store_true",
         default=False,
+    )
+    ana.add_argument(
+        "--evidence-file",
+        default=None,
+        metavar="PATH",
+        help="Host-gathered search evidence for G8 citation verification",
     )
 
     cap = sub.add_parser("capture", help="Capture arbitration verdict")
@@ -76,6 +83,27 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
         print(json.dumps({"error": str(exc)}))
         return 1
 
+    host_evidence: dict[str, list] | None = None
+    if args.evidence_file is not None:
+        try:
+            file_size = os.path.getsize(args.evidence_file)
+            if file_size > 10 * 1024 * 1024:
+                print(json.dumps({
+                    "error": f"evidence file exceeds 10MB: {file_size} bytes"
+                }))
+                return 1
+
+            with open(args.evidence_file, encoding="utf-8") as fh:
+                raw_evidence = json.load(fh)
+
+            host_evidence = _validate_evidence(raw_evidence)
+        except OSError as exc:
+            print(json.dumps({"error": str(exc)}))
+            return 1
+        except (json.JSONDecodeError, ValueError) as exc:
+            print(json.dumps({"error": f"invalid evidence file: {exc}"}))
+            return 1
+
     corpus_active = bool(os.environ.get("PLAN_FORGE_CORPUS_URL"))
     llm_clients = [] if mechanical_only else None
 
@@ -85,6 +113,7 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
         arbitration_mode=mode,
         preamble=preamble,
         llm_clients=llm_clients,
+        host_evidence=host_evidence,
     )
 
     should, to_arb = surface.decide_when_to_arbitrate(

@@ -93,6 +93,7 @@ def check(
     preamble: str | None = None,
     corpus_private: bool = False,
     arbitration_mode: str = "off",
+    host_evidence: dict[str, list] | None = None,
 ) -> Verdict:
     """Run all gates (F1-F7 + PBR + G1-G8) and return aggregated Verdict.
 
@@ -110,6 +111,8 @@ def check(
             text is omitted from the corpus row (only the hash is stored).
         arbitration_mode: surface mode forwarded to the corpus run row;
             controls which split findings are escalated to a human arbiter.
+        host_evidence: optional dict of citation -> evidence hits for
+            G8 Part B injection. Keys are canonicalized before lookup.
 
     Returns:
         Verdict with engineering (PASS/FAIL), epistemic (PASS/FAIL/VISION),
@@ -151,7 +154,7 @@ def check(
     # Passing llm_clients=[] explicitly skips LLM Part B (mechanical-only).
     if llm_clients is None:
         llm_clients = _bootstrap_llm_clients()
-    findings.extend(epistemic.run(parsed, llm_clients))
+    findings.extend(epistemic.run(parsed, llm_clients, host_evidence))
 
     engineering = _compute_engineering(findings)
     epistemic_verdict = _compute_epistemic(findings)

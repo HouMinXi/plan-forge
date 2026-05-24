@@ -12,6 +12,8 @@ from plan_forge.checks.epistemic._evidence import (
     PROV_UNBACKED_SEARCH_CLAIM,
     EvidenceHit,
     _format_evidence_block,
+    _validate_evidence,
+    canon,
     guard_unbacked_search,
     is_genuine_split,
     responses_to_evidence,
@@ -535,3 +537,160 @@ class TestFormatEvidenceBlock:
         result = _format_evidence_block([hit_partial])
         assert result.startswith("[1] (tier=T1_GOLD, example.com)")
         assert "Test -- snippet here\n" in result
+
+
+class TestCanon:
+    def test_strips_whitespace(self):
+        """Leading and trailing whitespace is stripped."""
+        assert canon("  Vaswani et al. (2017)  ") == "Vaswani et al. (2017)"
+
+    def test_collapses_internal_whitespace(self):
+        """Multiple spaces/tabs become single space."""
+        assert canon("Vaswani  et   al.") == "Vaswani et al."
+        assert canon("Vaswani\tet\tal.") == "Vaswani et al."
+
+    def test_nfc_normalization(self):
+        """Unicode NFC normalization applied."""
+        s1 = "\u00e9"
+        s2 = "\u00e9"
+        assert canon("Caf" + s1) == canon("Caf" + s2)
+
+    def test_combined_transformations(self):
+        """Strip + collapse + NFC all apply."""
+        raw = "  Vaswani  et  al.  "
+        assert canon(raw) == "Vaswani et al."
+
+
+class TestValidateEvidence:
+    def test_valid_evidence_bundle(self):
+        """Valid dict with hit lists passes through."""
+        raw = {
+            "Vaswani et al. (2017)": [
+                {
+                    "tier": "T1_GOLD",
+                    "domain": "arxiv.org",
+                    "title": "Attention Is All You Need",
+                    "snippet": "Vaswani et al. 2017",
+                    "url": "https://arxiv.org/abs/1706.03762",
+                }
+            ]
+        }
+        result = _validate_evidence(raw)
+        assert "Vaswani et al. (2017)" in result
+        assert len(result["Vaswani et al. (2017)"]) == 1
+        assert result["Vaswani et al. (2017)"][0]["tier"] == "T1_GOLD"
+
+    def test_search_failed_sentinel(self):
+        """{"search_failed": true} stays a dict (not wrapped in list)."""
+        raw = {
+            "Citation X": {"search_failed": True}
+        }
+        result = _validate_evidence(raw)
+        assert "Citation X" in result
+        assert result["Citation X"] == {"search_failed": True}
+
+    def test_caps_hits_at_10(self):
+        """More than 10 hits truncated to 10."""
+        hits = [
+            {
+                "tier": "T1_GOLD",
+                "domain": f"example{i}.com",
+                "title": f"Title {i}",
+                "snippet": f"Snippet {i}",
+                "url": f"https://example{i}.com",
+            }
+            for i in range(15)
+        ]
+        raw = {"Citation": hits}
+        result = _validate_evidence(raw)
+        assert len(result["Citation"]) == 10
+
+    def test_truncates_snippet_to_500_chars(self):
+        """Long snippets truncated to 500 chars."""
+        long_snippet = "x" * 600
+        raw = {
+            "Citation": [
+                {
+                    "tier": "T1_GOLD",
+                    "domain": "example.com",
+                    "title": "Title",
+                    "snippet": long_snippet,
+                    "url": "https://example.com",
+                }
+            ]
+        }
+        result = _validate_evidence(raw)
+        assert len(result["Citation"][0]["snippet"]) == 500
+
+    def test_strips_control_chars_from_title_snippet(self):
+        """Control characters removed from title and snippet."""
+        raw = {
+            "Citation": [
+                {
+                    "tier": "T1_GOLD",
+                    "domain": "example.com",
+                    "title": "Title\x00with\x1Fcontrol",
+                    "snippet": "Snippet\x0Awith\x0Dcontrol",
+                    "url": "https://example.com",
+                }
+            ]
+        }
+        result = _validate_evidence(raw)
+        title = result["Citation"][0]["title"]
+        snippet = result["Citation"][0]["snippet"]
+        assert "\x00" not in title
+        assert "\x1F" not in title
+        assert "\x0A" not in snippet
+        assert "\x0D" not in snippet
+
+    def test_coerces_unknown_tier_to_t3_bronze(self):
+        """Unknown tier value coerced to T3_BRONZE with warning."""
+        raw = {
+            "Citation": [
+                {
+                    "tier": "T99_UNKNOWN",
+                    "domain": "example.com",
+                    "title": "Title",
+                    "snippet": "Snippet",
+                    "url": "https://example.com",
+                }
+            ]
+        }
+        with pytest.warns(UserWarning, match="unknown tier.*T3_BRONZE"):
+            result = _validate_evidence(raw)
+        assert result["Citation"][0]["tier"] == "T3_BRONZE"
+
+    def test_rejects_non_dict_top_level(self):
+        """Top-level non-dict raises ValueError."""
+        with pytest.raises(ValueError, match="evidence must be a dict"):
+            _validate_evidence([])
+
+    def test_rejects_non_string_keys(self):
+        """Non-string keys raise ValueError."""
+        raw = {123: []}
+        with pytest.raises(ValueError, match="keys must be strings"):
+            _validate_evidence(raw)
+
+    def test_rejects_empty_whitespace_keys(self):
+        """Empty or whitespace-only keys raise ValueError."""
+        with pytest.raises(ValueError, match="keys cannot be empty"):
+            _validate_evidence({"  ": []})
+
+    def test_rejects_key_exceeding_1kb(self):
+        """Keys > 1KB raise ValueError."""
+        long_key = "x" * 1025
+        raw = {long_key: []}
+        with pytest.raises(ValueError, match="key exceeds 1KB"):
+            _validate_evidence(raw)
+
+    def test_rejects_non_list_non_search_failed_value(self):
+        """Value that is not list or search_failed sentinel raises."""
+        raw = {"Citation": "invalid"}
+        with pytest.raises(ValueError, match="must be list"):
+            _validate_evidence(raw)
+
+    def test_rejects_non_dict_hit(self):
+        """Hit that is not a dict raises ValueError."""
+        raw = {"Citation": ["not a dict"]}
+        with pytest.raises(ValueError, match="hit 0.*must be dict"):
+            _validate_evidence(raw)

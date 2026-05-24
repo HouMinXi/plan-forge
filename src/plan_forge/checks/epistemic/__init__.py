@@ -14,8 +14,22 @@ from plan_forge.parser import ParsedPlan
 from plan_forge.verdict import Finding
 
 
-def run(parsed: ParsedPlan, llm_clients: list[LLMClient]) -> list[Finding]:
-    """Run G1-G8 in numeric order; return combined findings."""
+def run(
+    parsed: ParsedPlan,
+    llm_clients: list[LLMClient],
+    host_evidence: dict[str, list] | None = None,
+) -> list[Finding]:
+    """Run G1-G8 in numeric order; return combined findings.
+
+    Args:
+        parsed: parsed plan document.
+        llm_clients: LLM client instances for LLM gates.
+        host_evidence: optional dict of citation -> evidence hits
+            for G8 Part B injection.
+
+    Returns:
+        Combined findings from all epistemic gates.
+    """
     # Deferred imports so the package can load before all gate modules exist
     from plan_forge.checks.epistemic import (
         g1_reference_class,
@@ -36,5 +50,7 @@ def run(parsed: ParsedPlan, llm_clients: list[LLMClient]) -> list[Finding]:
     findings.extend(g5_antifragility.check(parsed))
     findings.extend(g6_sc_falsifiability.check(parsed, llm_clients))
     findings.extend(g7_scope_challenge.check(parsed))
-    findings.extend(g8_source_diversity.check(parsed, llm_clients))
+    findings.extend(
+        g8_source_diversity.check(parsed, llm_clients, host_evidence)
+    )
     return findings

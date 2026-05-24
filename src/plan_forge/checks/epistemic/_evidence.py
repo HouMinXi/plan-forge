@@ -5,6 +5,9 @@ Comparison is case-insensitive via verdict_matches().
 """
 from __future__ import annotations
 
+import re
+import unicodedata
+import warnings
 from typing import TypedDict
 
 from plan_forge.llm.client import LLMClient, LLMResponse
@@ -170,6 +173,109 @@ class EvidenceHit(TypedDict):
     title: str
     snippet: str
     url: str
+
+
+def canon(citation: str) -> str:
+    """Canonicalize a citation string for evidence lookup.
+
+    Applies strip + collapse internal whitespace + NFC normalization
+    so whitespace-variant evidence keys match parsed citations.
+
+    Args:
+        citation: raw citation string.
+
+    Returns:
+        Canonicalized string for dict key comparison.
+    """
+    s = citation.strip()
+    s = re.sub(r'\s+', ' ', s)
+    return unicodedata.normalize('NFC', s)
+
+
+def _validate_evidence(raw: dict) -> dict[str, list | dict]:
+    """Validate and sanitize host-provided evidence dict.
+
+    Args:
+        raw: untrusted dict from JSON load.
+
+    Returns:
+        Sanitized dict where each key is a citation and each value
+        is a list of hit-dicts OR the dict {"search_failed": True}.
+        The sentinel stays a dict so g8 isinstance(raw, list)
+        returns False and the guard runs.
+
+    Raises:
+        ValueError: if validation fails.
+    """
+    if not isinstance(raw, dict):
+        raise ValueError("evidence must be a dict")
+
+    out: dict[str, list | dict] = {}
+    for key, val in raw.items():
+        if not isinstance(key, str):
+            raise ValueError(
+                f"evidence keys must be strings, got {type(key)}"
+            )
+        if not key.strip():
+            raise ValueError(
+                "evidence keys cannot be empty or whitespace"
+            )
+        if len(key) > 1024:
+            raise ValueError(
+                f"evidence key exceeds 1KB: {key[:50]}..."
+            )
+
+        if (
+            isinstance(val, dict)
+            and val.get("search_failed") is True
+        ):
+            out[key] = {"search_failed": True}
+            continue
+
+        if not isinstance(val, list):
+            raise ValueError(
+                f"evidence value for {key!r} must be list or "
+                f"{{'search_failed': true}}, got {type(val)}"
+            )
+
+        sanitized = []
+        for i, hit in enumerate(val[:10]):
+            if not isinstance(hit, dict):
+                raise ValueError(
+                    f"hit {i} for {key!r} must be dict, got {type(hit)}"
+                )
+
+            tier = hit.get("tier", "")
+            if tier and tier not in {
+                "T1_GOLD", "T2_SILVER", "T3_BRONZE", "T4_SUSPECT"
+            }:
+                warnings.warn(
+                    f"unknown tier {tier!r} in hit {i} for {key!r}; "
+                    f"coercing to T3_BRONZE",
+                    stacklevel=2
+                )
+                tier = "T3_BRONZE"
+
+            title = str(hit.get("title", ""))
+            snippet = str(hit.get("snippet", ""))
+            domain = str(hit.get("domain", ""))
+            url = str(hit.get("url", ""))
+
+            title = re.sub(r'[\x00-\x1F\x7F]', '', title)
+            snippet = re.sub(r'[\x00-\x1F\x7F]', '', snippet)
+            snippet = snippet[:500]
+
+            sanitized.append({
+                "tier": tier,
+                "domain": domain,
+                "title": title,
+                "snippet": snippet,
+                "url": url,
+            })
+
+        out[key] = sanitized
+
+    return out
 
 
 def _format_evidence_block(hits: list[EvidenceHit]) -> str:

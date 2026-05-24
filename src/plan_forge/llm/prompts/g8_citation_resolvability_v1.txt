@@ -1,0 +1,79 @@
+You are verifying a single citation from a project plan's External
+Voices section. Determine whether the citation is RESOLVABLE -- i.e.,
+whether the cited work plausibly exists as a real, identifiable
+publication or source.
+
+Use ONLY the host-provided evidence below; do not search; do NOT
+populate the search_evidence field.
+
+Tiered verdict (per E3):
+  RESOLVED_VIA_SEARCH:  search returned matching record
+  RESOLVED_BY_KNOWLEDGE: training-corpus confirms (no search needed
+                        because work is well-known canonical)
+  UNCERTAIN:            need human verification (surfaces to H1)
+  UNRESOLVABLE:         internal contradiction OR search confirmed
+                        false OR fabricated
+
+A citation has internal contradictions if:
+  - author lifespan inconsistent with publication year
+    (e.g., "Turing 2010")
+  - work title mentions technology not yet existing at year
+  - publisher / venue did not exist at year
+
+Acceptable example (RESOLVED_BY_KNOWLEDGE):
+  "Popper, K. (1959). The Logic of Scientific Discovery. Routledge."
+  -> {"verdict": "RESOLVED_BY_KNOWLEDGE", "reason": "well-known
+       philosophical canonical work; author + title + year + publisher
+       consistent",
+      "cited_instances": [], "search_evidence": []}
+
+Acceptable example (RESOLVED_VIA_SEARCH):
+  "Pineau et al. (2020). Improving Reproducibility in Machine Learning
+   Research. JMLR."
+  -> {"verdict": "RESOLVED_VIA_SEARCH",
+      "reason": "Pineau et al 2020 paper on ML reproducibility verified
+       in JMLR per search",
+      "cited_instances": [],
+      "search_evidence": [{"query": "Pineau 2020 reproducibility JMLR",
+       "result_summary": "paper found at jmlr.org",
+       "url": "<retrieved-url>"}]}
+
+UNCERTAIN example (generic author, plausible but not findable):
+  "Smith, J. (2024). Towards a Theory of Plan Robustness. AI Methods."
+  -> {"verdict": "UNCERTAIN",
+      "reason": "generic author name 'Smith, J.' and generic journal
+       'AI Methods'; search returned no match; plausible but not
+       verifiable",
+      "cited_instances": [{"snippet": "Smith, J.",
+       "issue": "generic author without first-name initial"}],
+      "search_evidence": [{"query": "Smith Theory of Plan Robustness
+       2024", "result_summary": "no matching record",
+       "url": "<retrieved-url>"}]}
+
+UNRESOLVABLE example (internal contradiction):
+  "Turing, A. (2010). On Capabilities of Transformer Networks. Mind."
+  -> {"verdict": "UNRESOLVABLE",
+      "reason": "Turing died 1954; cannot author 2010 transformer paper",
+      "cited_instances": [{"snippet": "Turing, A. (2010)",
+       "issue": "temporal impossibility"}],
+      "search_evidence": []}
+
+INPUT:
+{"citation_text": "...", "context": "<where cited>"}
+
+OUTPUT:
+{"verdict": "RESOLVED_VIA_SEARCH" | "RESOLVED_BY_KNOWLEDGE"
+            | "UNCERTAIN" | "UNRESOLVABLE",
+ "reason": "<one sentence>",
+ "cited_instances": [{"snippet": "<text>", "issue": "<what's wrong>"}],
+ "search_evidence": [{"query": "...", "result_summary": "...",
+                      "url": "..."}]}
+
+Constraints:
+- Generic author names (Smith / Brown / Lee) without first-name
+  initial default to UNCERTAIN unless search resolves.
+- Do not fabricate URLs in search_evidence; use actual retrieved
+  URLs or omit the entry.
+- UNCERTAIN is NOT a failure -- surfaces to human arbitration.
+- UNRESOLVABLE requires concrete contradiction or confirmed-false
+  search result.
