@@ -694,3 +694,30 @@ class TestValidateEvidence:
         raw = {"Citation": ["not a dict"]}
         with pytest.raises(ValueError, match="hit 0.*must be dict"):
             _validate_evidence(raw)
+
+    def test_wrapped_form_unwraps_evidence(self):
+        """Wrapped {"plan_hash", "evidence"} unwraps to inner dict."""
+        inner = {
+            "Vaswani et al. (2017)": [
+                {
+                    "tier": "T1_GOLD",
+                    "domain": "arxiv.org",
+                    "title": "Attention Is All You Need",
+                    "snippet": "Vaswani et al. 2017",
+                    "url": "https://arxiv.org/abs/1706.03762",
+                }
+            ]
+        }
+        raw = {"plan_hash": "abc123", "evidence": inner}
+        result = _validate_evidence(raw)
+        assert "Vaswani et al. (2017)" in result
+        assert len(result["Vaswani et al. (2017)"]) == 1
+        # plan_hash and evidence are NOT citation keys
+        assert "plan_hash" not in result
+        assert "evidence" not in result
+
+    def test_wrapped_form_without_plan_hash_treated_as_bare(self):
+        """Dict with 'evidence' key but no 'plan_hash' is bare form."""
+        raw = {"evidence": "not-a-citation-value"}
+        with pytest.raises(ValueError, match="must be list"):
+            _validate_evidence(raw)

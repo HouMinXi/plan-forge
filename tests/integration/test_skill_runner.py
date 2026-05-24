@@ -1,4 +1,4 @@
-"""Integration tests for plan_forge.adapters.skill.runner (T28).
+"""Integration tests for the skill runner adapter.
 
 Each test calls runner.main(argv) in-process and captures stdout via
 capsys.  Capture tests use corpus_engine fixture for a real DB.
@@ -6,6 +6,7 @@ Monkeypatch api.check for deterministic split candidates where needed.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import tempfile
@@ -537,7 +538,7 @@ def test_capture_without_finding_id(capsys, corpus_engine):
 
 
 def test_extract_citations_matches_parser(capsys, tmp_path, monkeypatch):
-    """extract-citations command returns parse().citations."""
+    """extract-citations returns plan_hash + citations matching parser."""
     monkeypatch.delenv("PLAN_FORGE_CORPUS_URL", raising=False)
 
     citations = [
@@ -564,12 +565,16 @@ def test_extract_citations_matches_parser(capsys, tmp_path, monkeypatch):
     assert rc == 0
 
     result = json.loads(out)
-    assert isinstance(result, list)
+    assert isinstance(result, dict)
+    assert "plan_hash" in result
+    assert "citations" in result
+    assert isinstance(result["plan_hash"], str)
+    assert len(result["plan_hash"]) == 64  # sha256 hex
 
-    from plan_forge import parser
-    parsed = parser.parse(plan_text)
-    assert result == parsed.citations
-    assert len(result) == 3
+    from plan_forge import parser as plan_parser
+    parsed = plan_parser.parse(plan_text)
+    assert result["citations"] == parsed.citations
+    assert len(result["citations"]) == 3
 
 
 def test_extract_citations_missing_file(capsys, monkeypatch):
@@ -585,7 +590,7 @@ def test_extract_citations_missing_file(capsys, monkeypatch):
 
 
 def test_extract_citations_empty_section(capsys, tmp_path, monkeypatch):
-    """extract-citations on plan without External Voices -> []."""
+    """extract-citations on plan without External Voices -> empty list."""
     monkeypatch.delenv("PLAN_FORGE_CORPUS_URL", raising=False)
     plan_text = "# Plan\n\nSome content without citations.\n"
     plan_file = tmp_path / "test_plan.md"
@@ -598,4 +603,102 @@ def test_extract_citations_empty_section(capsys, tmp_path, monkeypatch):
     out = capsys.readouterr().out
     assert rc == 0
     result = json.loads(out)
-    assert result == []
+    assert result["citations"] == []
+    assert "plan_hash" in result
+
+
+def _medium_count(summary: str) -> int:
+    """Extract MEDIUM finding count from verdict summary string."""
+    for line in summary.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("MEDIUM:"):
+            return int(stripped.split(":")[1].strip())
+    return 0
+
+
+def test_analyze_matching_plan_hash_no_finding(
+    capsys, tmp_path, monkeypatch,
+):
+    """Evidence with matching plan_hash: no stale-evidence finding."""
+    monkeypatch.delenv("PLAN_FORGE_CORPUS_URL", raising=False)
+
+    plan_text = "# Plan\n\nSome content.\n"
+    plan_file = tmp_path / "plan.md"
+    plan_file.write_text(plan_text, encoding="utf-8")
+
+    correct_hash = hashlib.sha256(
+        plan_text.encode("utf-8"),
+    ).hexdigest()
+
+    evidence = {
+        "plan_hash": correct_hash,
+        "evidence": {},
+    }
+    ev_file = tmp_path / "evidence.json"
+    ev_file.write_text(json.dumps(evidence), encoding="utf-8")
+
+    rc = runner.main([
+        "analyze",
+        "--plan-path", str(plan_file),
+        "--mechanical-only",
+        "--arbitration-mode", "off",
+        "--evidence-file", str(ev_file),
+    ])
+    out = _parsed(capsys.readouterr().out)
+    assert rc == 0
+    assert _medium_count(out["summary"]) == 0
+
+
+def test_analyze_mismatched_plan_hash_medium_finding(
+    capsys, tmp_path, monkeypatch,
+):
+    """Evidence with wrong plan_hash adds a MEDIUM finding."""
+    monkeypatch.delenv("PLAN_FORGE_CORPUS_URL", raising=False)
+
+    plan_text = "# Plan\n\nSome content.\n"
+    plan_file = tmp_path / "plan.md"
+    plan_file.write_text(plan_text, encoding="utf-8")
+
+    evidence = {
+        "plan_hash": "0" * 64,
+        "evidence": {},
+    }
+    ev_file = tmp_path / "evidence.json"
+    ev_file.write_text(json.dumps(evidence), encoding="utf-8")
+
+    rc = runner.main([
+        "analyze",
+        "--plan-path", str(plan_file),
+        "--mechanical-only",
+        "--arbitration-mode", "off",
+        "--evidence-file", str(ev_file),
+    ])
+    out = _parsed(capsys.readouterr().out)
+    assert rc == 0
+    assert _medium_count(out["summary"]) == 1
+
+
+def test_analyze_bare_evidence_no_plan_hash_backcompat(
+    capsys, tmp_path, monkeypatch,
+):
+    """Bare-form evidence without plan_hash still works."""
+    monkeypatch.delenv("PLAN_FORGE_CORPUS_URL", raising=False)
+
+    plan_text = "# Plan\n\nSome content.\n"
+    plan_file = tmp_path / "plan.md"
+    plan_file.write_text(plan_text, encoding="utf-8")
+
+    evidence = {}
+    ev_file = tmp_path / "evidence.json"
+    ev_file.write_text(json.dumps(evidence), encoding="utf-8")
+
+    rc = runner.main([
+        "analyze",
+        "--plan-path", str(plan_file),
+        "--mechanical-only",
+        "--arbitration-mode", "off",
+        "--evidence-file", str(ev_file),
+    ])
+    out = _parsed(capsys.readouterr().out)
+    assert rc == 0
+    assert _medium_count(out["summary"]) == 0

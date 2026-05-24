@@ -192,8 +192,17 @@ def canon(citation: str) -> str:
     return unicodedata.normalize('NFC', s)
 
 
-def _validate_evidence(raw: dict) -> dict[str, list | dict]:
+def _validate_evidence(
+    raw: dict,
+) -> dict[str, list | dict]:
     """Validate and sanitize host-provided evidence dict.
+
+    Accepts two forms:
+      1. Bare form: {citation: hits, ...} (Phase 2 back-compat)
+      2. Wrapped form: {"plan_hash": "<sha>", "evidence": {citation: hits}}
+
+    The wrapped form is unwrapped transparently: "plan_hash" and
+    "evidence" are NOT treated as citation keys.
 
     Args:
         raw: untrusted dict from JSON load.
@@ -209,6 +218,14 @@ def _validate_evidence(raw: dict) -> dict[str, list | dict]:
     """
     if not isinstance(raw, dict):
         raise ValueError("evidence must be a dict")
+
+    # Unwrap {"plan_hash": ..., "evidence": {...}} envelope.
+    if (
+        "evidence" in raw
+        and isinstance(raw["evidence"], dict)
+        and "plan_hash" in raw
+    ):
+        raw = raw["evidence"]
 
     out: dict[str, list | dict] = {}
     for key, val in raw.items():

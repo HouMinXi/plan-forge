@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -12,6 +13,7 @@ from plan_forge import parser
 from plan_forge.arbitration import surface, bundle, capture
 from plan_forge.checks.epistemic._evidence import _validate_evidence
 from plan_forge.corpus.record import CorpusRecorder
+from plan_forge.verdict import Finding, Severity
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -84,6 +86,7 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
         return 1
 
     host_evidence: dict[str, list] | None = None
+    stale_evidence_finding: Finding | None = None
     if args.evidence_file is not None:
         try:
             file_size = os.path.getsize(args.evidence_file)
@@ -95,6 +98,25 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
 
             with open(args.evidence_file, encoding="utf-8") as fh:
                 raw_evidence = json.load(fh)
+
+            # Check plan-hash staleness before unwrapping.
+            if (
+                isinstance(raw_evidence, dict)
+                and "plan_hash" in raw_evidence
+            ):
+                saved_hash = raw_evidence["plan_hash"]
+                current_hash = _plan_hash(plan_text)
+                if saved_hash != current_hash:
+                    stale_evidence_finding = Finding(
+                        check_id="G8.host",
+                        severity=Severity.MEDIUM,
+                        location=plan_path,
+                        message=(
+                            "evidence was gathered for a "
+                            "different plan version; "
+                            "re-run extract-citations"
+                        ),
+                    )
 
             host_evidence = _validate_evidence(raw_evidence)
         except OSError as exc:
@@ -115,6 +137,9 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
         llm_clients=llm_clients,
         host_evidence=host_evidence,
     )
+
+    if stale_evidence_finding is not None:
+        verdict.findings.append(stale_evidence_finding)
 
     should, to_arb = surface.decide_when_to_arbitrate(
         verdict.findings, mode
@@ -217,6 +242,11 @@ def _cmd_capture(args: argparse.Namespace) -> int:
     return 0
 
 
+def _plan_hash(plan_text: str) -> str:
+    """Compute a content hash of the plan text for staleness detection."""
+    return hashlib.sha256(plan_text.encode("utf-8")).hexdigest()
+
+
 def _cmd_extract_citations(args: argparse.Namespace) -> int:
     try:
         with open(args.plan_path, encoding="utf-8") as fh:
@@ -226,7 +256,10 @@ def _cmd_extract_citations(args: argparse.Namespace) -> int:
         return 1
 
     parsed = parser.parse(plan_text)
-    print(json.dumps(parsed.citations))
+    print(json.dumps({
+        "plan_hash": _plan_hash(plan_text),
+        "citations": parsed.citations,
+    }))
     return 0
 
 
