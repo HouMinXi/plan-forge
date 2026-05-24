@@ -8,7 +8,7 @@ from plan_forge.checks.epistemic.g8_source_diversity import check
 from plan_forge.llm.client import LLMResponse
 from plan_forge.llm.mocks import MockClient
 from plan_forge.parser import parse
-from plan_forge.verdict import Severity
+from plan_forge.verdict import EvidenceTier, Severity
 
 _FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 
@@ -176,3 +176,110 @@ class TestG8PartB:
             if f.severity == Severity.ARBITRATION
         ]
         assert arb == []
+
+
+class TestG8UnbackedSearchGuard:
+    def test_n2_both_tool_less_search_claim_downgraded_to_uncertain(self):
+        """N=2 both tool-less RESOLVED_VIA_SEARCH -> consensus UNCERTAIN."""
+
+        class ToollessClient(MockClient):
+            def __init__(self, name: str, verdict: str):
+                raw_json = json.dumps({
+                    "verdict": verdict,
+                    "reason": "test",
+                    "cited_instances": [],
+                    "search_evidence": [],
+                })
+                super().__init__(
+                    name=name,
+                    responses={"": LLMResponse(
+                        verdict=verdict,
+                        reasoning="test",
+                        cited_instances=[],
+                        search_evidence=[],
+                        cost_usd=0.0,
+                        raw_response={"original_json": raw_json},
+                    )},
+                )
+
+        parsed = parse(_load_fixture("g8_pass.md"))
+        clients = [
+            ToollessClient("toolless_a", "RESOLVED_VIA_SEARCH"),
+            ToollessClient("toolless_b", "RESOLVED_VIA_SEARCH"),
+        ]
+        findings = check(parsed, clients)
+
+        uncertain = [
+            f for f in findings
+            if f.check_id == "G8.B.uncertain"
+        ]
+        assert len(uncertain) == 1
+        assert uncertain[0].severity == Severity.MEDIUM
+
+        ev = uncertain[0].llm_evidence
+        assert len(ev) == 2
+        assert all(e.tier == EvidenceTier.T4_SUSPECT for e in ev)
+
+    def test_n2_split_one_tool_one_tool_less_creates_arbitration(self):
+        """N=2 one with tool (RESOLVED_VIA_SEARCH) + one tool-less
+        (RESOLVED_VIA_SEARCH -> UNCERTAIN) -> split -> ARBITRATION."""
+
+        class ClientWithSchema(MockClient):
+            def __init__(self, name: str, verdict: str, has_tool: bool):
+                raw_json = json.dumps({
+                    "verdict": verdict,
+                    "reason": "test",
+                    "cited_instances": [],
+                    "search_evidence": [],
+                })
+                super().__init__(
+                    name=name,
+                    responses={"": LLMResponse(
+                        verdict=verdict,
+                        reasoning="test",
+                        cited_instances=[],
+                        search_evidence=[],
+                        cost_usd=0.0,
+                        raw_response={"original_json": raw_json},
+                    )},
+                )
+                self.has_tool = has_tool
+
+        parsed = parse(_load_fixture("g8_pass.md"))
+        clients = [
+            ClientWithSchema("withtool", "RESOLVED_VIA_SEARCH", True),
+            ClientWithSchema("toolless", "RESOLVED_VIA_SEARCH", False),
+        ]
+
+        from plan_forge.checks.epistemic._evidence import schema_for
+        from unittest.mock import patch
+
+        def patched_schema(name):
+            for c in clients:
+                if c.name == name:
+                    return {"type": "web_search"} if c.has_tool else None
+            return schema_for(name)
+
+        with patch(
+            "plan_forge.checks.epistemic.g8_source_diversity.schema_for",
+            side_effect=patched_schema,
+        ):
+            findings = check(parsed, clients)
+
+        arb = [
+            f for f in findings
+            if f.check_id == "G8.B.llm"
+            and f.severity == Severity.ARBITRATION
+        ]
+        assert len(arb) == 1
+        assert "arbitration" in arb[0].message
+
+        ev = arb[0].llm_evidence
+        assert len(ev) == 2
+        verdicts = {e.verdict for e in ev}
+        assert "RESOLVED_VIA_SEARCH" in verdicts
+        assert "UNCERTAIN" in verdicts
+
+        tiers = {e.provider: e.tier for e in ev}
+        assert tiers["toolless"] == EvidenceTier.T4_SUSPECT
+        assert tiers["withtool"] == EvidenceTier.UNCLASSIFIED

@@ -10,6 +10,7 @@ import json
 
 from plan_forge.checks.epistemic._evidence import (
     G6_UNVERIFIED,
+    guard_unbacked_search,
     is_genuine_split,
     responses_to_evidence,
     schema_for,
@@ -73,6 +74,9 @@ def check(
                 "prompt_version": _PROMPT_VERSION,
             },
             tool_use_schemas=schemas,
+            evidence_guard=lambda names, evs: guard_unbacked_search(
+                names, evs, schemas
+            ),
         )
 
         if vote.status == "no_providers":

@@ -11,8 +11,10 @@ via majority vote.  Handles four arities:
 """
 from __future__ import annotations
 
+import copy
 import warnings
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from plan_forge.llm.client import LLMClient, LLMResponse
@@ -26,6 +28,7 @@ class VoteResult:
     evidences: list[LLMResponse] = field(default_factory=list)
     active_providers: list[str] = field(default_factory=list)
     threshold: int | None = None
+    provenance: dict[str, str] = field(default_factory=dict)
 
 
 def search_vote(
@@ -34,6 +37,8 @@ def search_vote(
     *,
     cache_key_inputs: dict,
     tool_use_schemas: dict,
+    evidence_guard: Callable[[list[str], list[LLMResponse]], dict[str, str]]
+                    | None = None,
 ) -> VoteResult:
     """Call each active client and aggregate verdicts by majority vote.
 
@@ -43,6 +48,11 @@ def search_vote(
         cache_key_inputs: base dict for cache key; provider name injected
             per-call so keys differ by provider.
         tool_use_schemas: provider_name -> tool schema dict | None.
+        evidence_guard: optional pre-tally hook; receives
+            (active_providers, evidences) and returns
+            {provider_name: provenance_key} for flagged providers.
+            The hook MUTATES evidences[i].verdict in place and may
+            raise. Runs BEFORE verdicts are extracted for the tally.
 
     Returns:
         VoteResult with status, optional consensus verdict, and evidences.
@@ -56,6 +66,7 @@ def search_vote(
             evidences=[],
             active_providers=[],
             threshold=None,
+            provenance={},
         )
 
     evidences: list[LLMResponse] = []
@@ -66,9 +77,11 @@ def search_vote(
             tool_use_schema=schema,
             cache_key_inputs={**cache_key_inputs, "provider": client.name},
         )
-        evidences.append(resp)
+        evidences.append(copy.copy(resp))
 
     active_names = [c.name for c in active_clients]
+
+    prov = evidence_guard(active_names, evidences) if evidence_guard else {}
 
     if n == 1:
         warnings.warn(
@@ -82,6 +95,7 @@ def search_vote(
             evidences=evidences,
             active_providers=active_names,
             threshold=None,
+            provenance=prov,
         )
 
     verdicts = [e.verdict for e in evidences]
@@ -94,6 +108,7 @@ def search_vote(
                 evidences=evidences,
                 active_providers=active_names,
                 threshold=None,
+                provenance=prov,
             )
         return VoteResult(
             status="indeterminate",
@@ -101,6 +116,7 @@ def search_vote(
             evidences=evidences,
             active_providers=active_names,
             threshold=None,
+            provenance=prov,
         )
 
     # N >= 3: strict majority requires floor(N/2)+1 votes (= n//2 + 1)
@@ -114,6 +130,7 @@ def search_vote(
             evidences=evidences,
             active_providers=active_names,
             threshold=threshold,
+            provenance=prov,
         )
     return VoteResult(
         status="indeterminate",
@@ -121,4 +138,5 @@ def search_vote(
         evidences=evidences,
         active_providers=active_names,
         threshold=threshold,
+        provenance=prov,
     )
