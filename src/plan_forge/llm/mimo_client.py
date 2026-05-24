@@ -41,13 +41,14 @@ class MimoClient:
     name = "mimo"
     model = _MIMO_MODEL
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, disable_thinking: bool = False) -> None:
         # endpoint confirmed via claude_mimo() alias in shell config
         self._client = anthropic.Anthropic(
             api_key=api_key,
             base_url=_MIMO_BASE_URL,
         )
         self._cache = SqlAlchemyCacheBackend()
+        self._disable_thinking = disable_thinking
 
     def health_check(self) -> HealthStatus:
         now = datetime.now(timezone.utc)
@@ -107,18 +108,24 @@ class MimoClient:
         tool_use_schema: dict | None = None,
         cache_key_inputs: dict,
     ) -> LLMResponse:
-        key = cache_key(cache_key_inputs, self.name, self.model, tool_use_schema)
+        effective_inputs = {
+            **cache_key_inputs,
+            "mimo_thinking_disabled": self._disable_thinking,
+        }
+        key = cache_key(effective_inputs, self.name, self.model, tool_use_schema)
         cached = self._cache.get(key)
         if cached is not None:
             return LLMResponse(**cached)
 
         kwargs: dict = {
             "model": self.model,
-            "max_tokens": 1024,
+            "max_tokens": 4096,
             "messages": [{"role": "user", "content": prompt}],
         }
         if tool_use_schema is not None:
             kwargs["tools"] = [tool_use_schema]
+        if self._disable_thinking:
+            kwargs["thinking"] = {"type": "disabled"}
 
         try:
             raw = self._client.messages.create(**kwargs)
