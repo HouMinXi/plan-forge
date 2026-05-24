@@ -196,7 +196,7 @@ def check(
                 json.dumps(raw, sort_keys=True).encode()
             ).hexdigest()
 
-        ttl_class = "recent" if inject else "standard"
+        ttl_class = "recent" if inject else "canonical"
 
         def build_evidence_guard(should_skip: bool):
             """Build guard callback that conditionally skips downgrade."""

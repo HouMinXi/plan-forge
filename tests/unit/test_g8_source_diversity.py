@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from pathlib import Path
 
 from plan_forge.checks.epistemic.g8_source_diversity import check
@@ -283,3 +284,46 @@ class TestG8UnbackedSearchGuard:
         tiers = {e.provider: e.tier for e in ev}
         assert tiers["toolless"] == EvidenceTier.T4_SUSPECT
         assert tiers["withtool"] == EvidenceTier.UNCLASSIFIED
+
+
+def test_g8_no_evidence_uses_valid_ttl_class(
+    corpus_engine, clean_cache, monkeypatch
+):
+    """Without host evidence, Part B must hand cache.set a valid ttl_class.
+
+    The no-evidence branch must resolve to 'canonical'. A non-TTL_SECONDS
+    value makes cache.set raise ValueError, breaking every real-provider
+    call that lacks host evidence. MockClient bypasses cache.set, so this
+    needs a real client with a stubbed network call plus the real cache
+    backend (wired to the test DB by corpus_engine).
+    """
+    import types
+
+    from plan_forge.llm.deepseek_client import DeepSeekClient
+
+    client = DeepSeekClient(api_key="unused-stub-key")
+
+    def _fake_create(*args, **kwargs):
+        message = types.SimpleNamespace(content="UNRESOLVABLE")
+        return types.SimpleNamespace(
+            choices=[types.SimpleNamespace(message=message)],
+            usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            model_dump=lambda: {},
+        )
+
+    monkeypatch.setattr(
+        client._client.chat.completions, "create", _fake_create
+    )
+
+    plan_text = (
+        "# Plan\n\n## External Voices\n\n"
+        "- Brooks (1975). The Mythical Man-Month.\n\n"
+        "However, critics argue the estimate was optimistic. "
+        "A historical failure case: the 2016 incident taught a lesson.\n"
+    )
+    parsed = parse(plan_text)
+    assert parsed.citations
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        check(parsed, [client], host_evidence=None)
