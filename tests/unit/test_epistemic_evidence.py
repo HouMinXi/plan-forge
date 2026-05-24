@@ -10,6 +10,8 @@ from plan_forge.checks.epistemic._evidence import (
     G8_UNCERTAIN,
     PROV_FABRICATED_SEARCH_EVIDENCE,
     PROV_UNBACKED_SEARCH_CLAIM,
+    EvidenceHit,
+    _format_evidence_block,
     guard_unbacked_search,
     is_genuine_split,
     responses_to_evidence,
@@ -432,3 +434,104 @@ class TestPromptLoader:
         from plan_forge.llm.prompts import load
         with pytest.raises(FileNotFoundError, match="prompt not found"):
             load("nonexistent_prompt_v99")
+
+
+class TestEvidenceHit:
+    def test_accepts_five_keys(self):
+        """EvidenceHit dict with five keys type-checks."""
+        hit: EvidenceHit = {
+            "tier": "T1_GOLD",
+            "domain": "arxiv.org",
+            "title": "Attention Is All You Need",
+            "snippet": "Vaswani et al. 2017",
+            "url": "https://arxiv.org/abs/1706.03762",
+        }
+        assert hit["tier"] == "T1_GOLD"
+        assert hit["domain"] == "arxiv.org"
+
+
+class TestFormatEvidenceBlock:
+    def test_empty_list_returns_no_results(self):
+        """Empty hit list -> 'No results found...' string."""
+        result = _format_evidence_block([])
+        assert result == "No results found after exhaustive search.\n"
+
+    def test_single_hit_one_indexed(self):
+        """Single hit -> [1] (tier=..., domain) title -- snippet\\n"""
+        hit: EvidenceHit = {
+            "tier": "T1_GOLD",
+            "domain": "arxiv.org",
+            "title": "Attention Is All You Need",
+            "snippet": "Vaswani et al. 2017, Transformer",
+            "url": "https://arxiv.org/abs/1706.03762",
+        }
+        result = _format_evidence_block([hit])
+        expected = (
+            "[1] (tier=T1_GOLD, arxiv.org) "
+            "Attention Is All You Need -- "
+            "Vaswani et al. 2017, Transformer\n"
+        )
+        assert result == expected
+
+    def test_multiple_hits_sequential_indices(self):
+        """Two hits -> [1] ... [2] ... with trailing newlines."""
+        hits: list[EvidenceHit] = [
+            {
+                "tier": "T1_GOLD",
+                "domain": "arxiv.org",
+                "title": "Attention Is All You Need",
+                "snippet": "Vaswani et al. 2017",
+                "url": "https://arxiv.org/abs/1706.03762",
+            },
+            {
+                "tier": "T2_SILVER",
+                "domain": "en.wikipedia.org",
+                "title": "Thinking, Fast and Slow",
+                "snippet": "2011 book by Daniel Kahneman",
+                "url": "https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow",
+            },
+        ]
+        result = _format_evidence_block(hits)
+        lines = result.splitlines(keepends=True)
+        assert len(lines) == 2
+        assert lines[0].startswith("[1]")
+        assert lines[0].endswith("Vaswani et al. 2017\n")
+        assert lines[1].startswith("[2]")
+        assert lines[1].endswith("2011 book by Daniel Kahneman\n")
+
+    def test_fixture_evidence_bundle_format(self):
+        """G8 fixture-style evidence bundle renders char-for-char."""
+        hits: list[EvidenceHit] = [
+            {
+                "tier": "T1_GOLD",
+                "domain": "arxiv.org",
+                "title": "Attention Is All You Need",
+                "snippet": "Vaswani et al. 2017, Transformer, NeurIPS 31",
+                "url": "https://arxiv.org/abs/1706.03762",
+            },
+            {
+                "tier": "T1_GOLD",
+                "domain": "proceedings.neurips.cc",
+                "title": "Attention is All you Need",
+                "snippet": "NeurIPS 2017 proceedings entry",
+                "url": "https://proceedings.neurips.cc/...",
+            },
+        ]
+        result = _format_evidence_block(hits)
+
+        assert "[1] (tier=T1_GOLD, arxiv.org)" in result
+        assert "Attention Is All You Need --" in result
+        assert "[2] (tier=T1_GOLD, proceedings.neurips.cc)" in result
+        assert result.count("\n") == 2
+
+    def test_missing_optional_field_tolerant(self):
+        """Missing keys use .get() default empty string."""
+        hit_partial = {
+            "tier": "T1_GOLD",
+            "domain": "example.com",
+            "title": "Test",
+            "snippet": "snippet here",
+        }
+        result = _format_evidence_block([hit_partial])
+        assert result.startswith("[1] (tier=T1_GOLD, example.com)")
+        assert "Test -- snippet here\n" in result

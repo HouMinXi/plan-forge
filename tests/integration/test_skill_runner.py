@@ -534,3 +534,68 @@ def test_capture_without_finding_id(capsys, corpus_engine):
     row = _row(corpus_engine, arb_id)
     assert row.finding_id is None
     os.unlink(sf)
+
+
+def test_extract_citations_matches_parser(capsys, tmp_path, monkeypatch):
+    """extract-citations command returns parse().citations."""
+    monkeypatch.delenv("PLAN_FORGE_CORPUS_URL", raising=False)
+
+    citations = [
+        "Vaswani et al. (2017). Attention Is All You Need.",
+        "Silver et al. (2016). Mastering the game of Go.",
+        "Brown et al. (2020). Language Models are Few-Shot Learners.",
+    ]
+
+    plan_text = (
+        "# Plan\n\nSome content.\n\n"
+        "## External Voices\n\n"
+    )
+    for citation in citations:
+        plan_text += f"- {citation}\n"
+
+    plan_file = tmp_path / "test_plan.md"
+    plan_file.write_text(plan_text, encoding="utf-8")
+
+    rc = runner.main([
+        "extract-citations",
+        "--plan-path", str(plan_file),
+    ])
+    out = capsys.readouterr().out
+    assert rc == 0
+
+    result = json.loads(out)
+    assert isinstance(result, list)
+
+    from plan_forge import parser
+    parsed = parser.parse(plan_text)
+    assert result == parsed.citations
+    assert len(result) == 3
+
+
+def test_extract_citations_missing_file(capsys, monkeypatch):
+    """extract-citations on missing file -> JSON error + exit 1."""
+    monkeypatch.delenv("PLAN_FORGE_CORPUS_URL", raising=False)
+    rc = runner.main([
+        "extract-citations",
+        "--plan-path", "/nonexistent/plan.md",
+    ])
+    out = _parsed(capsys.readouterr().out)
+    assert rc == 1
+    assert "error" in out
+
+
+def test_extract_citations_empty_section(capsys, tmp_path, monkeypatch):
+    """extract-citations on plan without External Voices -> []."""
+    monkeypatch.delenv("PLAN_FORGE_CORPUS_URL", raising=False)
+    plan_text = "# Plan\n\nSome content without citations.\n"
+    plan_file = tmp_path / "test_plan.md"
+    plan_file.write_text(plan_text, encoding="utf-8")
+
+    rc = runner.main([
+        "extract-citations",
+        "--plan-path", str(plan_file),
+    ])
+    out = capsys.readouterr().out
+    assert rc == 0
+    result = json.loads(out)
+    assert result == []

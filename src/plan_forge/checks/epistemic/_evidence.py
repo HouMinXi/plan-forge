@@ -5,6 +5,8 @@ Comparison is case-insensitive via verdict_matches().
 """
 from __future__ import annotations
 
+from typing import TypedDict
+
 from plan_forge.llm.client import LLMClient, LLMResponse
 from plan_forge.llm.search_vote import VoteResult
 from plan_forge.llm import tool_use
@@ -159,3 +161,45 @@ def guard_unbacked_search(
 def schema_for(provider_name: str) -> dict | None:
     """Return the web-search tool schema for a provider, or None."""
     return _TOOL_BY_PROVIDER.get(provider_name)
+
+
+class EvidenceHit(TypedDict):
+    """Single host-search result for citation verification."""
+    tier: str
+    domain: str
+    title: str
+    snippet: str
+    url: str
+
+
+def _format_evidence_block(hits: list[EvidenceHit]) -> str:
+    """Format host-search hits as the evidence block injected into G8.
+
+    This MUST reproduce char-for-char the form validated at 91.7%
+    accuracy in the eval. Phase 2 injection depends on this exact
+    string so production reproduces the eval.
+
+    Args:
+        hits: list of EvidenceHit dicts (tier/domain/title/snippet/url).
+
+    Returns:
+        Formatted evidence block string. One line per hit (1-indexed,
+        trailing newline each). Empty list -> "No results found after
+        exhaustive search.\n"
+
+    Format:
+        [1] (tier=T1_GOLD, arxiv.org) Attention Is All You Need -- ...
+        [2] (tier=T2_SILVER, en.wikipedia.org) Thinking, Fast and ...
+    """
+    if not hits:
+        return "No results found after exhaustive search.\n"
+
+    lines = []
+    for i, hit in enumerate(hits, start=1):
+        tier = hit.get("tier", "")
+        domain = hit.get("domain", "")
+        title = hit.get("title", "")
+        snippet = hit.get("snippet", "")
+        line = f"[{i}] (tier={tier}, {domain}) {title} -- {snippet}\n"
+        lines.append(line)
+    return "".join(lines)

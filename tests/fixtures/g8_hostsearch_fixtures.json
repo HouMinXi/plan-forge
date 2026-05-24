@@ -1,0 +1,179 @@
+[
+  {
+    "id": "R1",
+    "category": "resolvable",
+    "citation": "Vaswani et al. (2017). Attention Is All You Need.",
+    "gt_verdict": "RESOLVED",
+    "gt_rationale": "arXiv 1706.03762; presented at NeurIPS 2017; confirmed",
+    "evidence_bundle": [
+      {"title": "Attention Is All You Need", "url": "https://arxiv.org/abs/1706.03762",
+       "domain": "arxiv.org", "snippet": "Vaswani et al. 2017, Transformer architecture, NeurIPS 31",
+       "tier": "T1_GOLD"},
+      {"title": "Attention is All you Need", "url": "https://proceedings.neurips.cc/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html",
+       "domain": "proceedings.neurips.cc", "snippet": "NeurIPS 2017 proceedings entry",
+       "tier": "T1_GOLD"}
+    ],
+    "host_verdict": "RESOLVED_VIA_SEARCH"
+  },
+  {
+    "id": "R2",
+    "category": "resolvable",
+    "citation": "Kahneman, D. (2011). Thinking, Fast and Slow.",
+    "gt_verdict": "RESOLVED",
+    "gt_rationale": "Farrar, Straus and Giroux, 2011, ISBN 9780374533557; confirmed",
+    "evidence_bundle": [
+      {"title": "Thinking, Fast and Slow", "url": "https://us.macmillan.com/books/9780374533557/",
+       "domain": "us.macmillan.com", "snippet": "by Daniel Kahneman, Farrar Straus and Giroux, 2011, ISBN 9780374533557",
+       "tier": "T1_GOLD"},
+      {"title": "Thinking, Fast and Slow - Wikipedia", "url": "https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow",
+       "domain": "en.wikipedia.org", "snippet": "2011 book by Daniel Kahneman, published by FSG",
+       "tier": "T2_SILVER"}
+    ],
+    "host_verdict": "RESOLVED_VIA_SEARCH"
+  },
+  {
+    "id": "R3",
+    "category": "resolvable",
+    "citation": "Brooks, F. P. (1975). The Mythical Man-Month. Addison-Wesley.",
+    "gt_verdict": "RESOLVED",
+    "gt_rationale": "Fred Brooks, Addison-Wesley, 1975; confirmed",
+    "evidence_bundle": [
+      {"title": "The Mythical Man-Month - Wikipedia", "url": "https://en.wikipedia.org/wiki/The_Mythical_Man-Month",
+       "domain": "en.wikipedia.org", "snippet": "by Fred Brooks, first published 1975, Addison-Wesley; editions 1982 and 1995",
+       "tier": "T2_SILVER"},
+      {"title": "The Mythical Man-Month: Essays on Software Engineering", "url": "https://www.amazon.com/Mythical-Man-Month-Essays-Software-Engineering/dp/0201006502",
+       "domain": "amazon.com", "snippet": "Frederick P. Brooks Jr., Addison-Wesley, ISBN 0201006506",
+       "tier": "T2_SILVER"}
+    ],
+    "host_verdict": "RESOLVED_VIA_SEARCH"
+  },
+  {
+    "id": "R4",
+    "category": "resolvable",
+    "citation": "Popper, K. (1959). The Logic of Scientific Discovery.",
+    "gt_verdict": "RESOLVED",
+    "gt_rationale": "first English edition 1959 (Logik der Forschung 1934); confirmed",
+    "evidence_bundle": [
+      {"title": "The Logic of Scientific Discovery - Wikipedia", "url": "https://en.wikipedia.org/wiki/The_Logic_of_Scientific_Discovery",
+       "domain": "en.wikipedia.org", "snippet": "Karl Popper; first English edition 1959; rewritten from 1934 German Logik der Forschung",
+       "tier": "T2_SILVER"},
+      {"title": "Popper, K. (1959). The Logic of Scientific Discovery. Routledge.", "url": "https://www.scirp.org/reference/referencespapers?referenceid=2677758",
+       "domain": "scirp.org", "snippet": "Routledge, 1959, first English edition reference",
+       "tier": "T2_SILVER"}
+    ],
+    "host_verdict": "RESOLVED_VIA_SEARCH"
+  },
+  {
+    "id": "F1",
+    "category": "not_found",
+    "citation": "Zhang, L. & Kumar, R. (2019). Theory of Distributed Plan Robustness. MIT Press.",
+    "gt_verdict": "UNRESOLVABLE",
+    "gt_rationale": "exhaustive search found no such MIT Press title; only unrelated arXiv papers on plan robustness",
+    "evidence_bundle": [
+      {"title": "Synthesizing Robust Plans under Incomplete Domain Models", "url": "https://arxiv.org/pdf/1104.5069",
+       "domain": "arxiv.org", "snippet": "related topic, different authors and title; not the cited work",
+       "tier": "T1_GOLD"}
+    ],
+    "host_verdict": "UNRESOLVABLE"
+  },
+  {
+    "id": "F2",
+    "category": "not_found",
+    "citation": "Mueller, S. (2018). Antifragile Systems Engineering. Springer.",
+    "gt_verdict": "UNRESOLVABLE",
+    "gt_rationale": "no such Mueller 2018 Springer book; antifragile systems engineering is a real topic with Springer articles, but this specific book does not exist",
+    "evidence_bundle": [
+      {"title": "Antifragility: systems engineering at its best", "url": "https://link.springer.com/article/10.1007/s40860-015-0013-3",
+       "domain": "link.springer.com", "snippet": "a Springer article on antifragile systems engineering (2015); not a 2018 Mueller book; no matching title found",
+       "tier": "T1_GOLD"}
+    ],
+    "host_verdict": "UNRESOLVABLE"
+  },
+  {
+    "id": "F3",
+    "category": "not_found",
+    "citation": "Anderson, J. & Whitfield, K. (2020). Epistemic Calibration in Software Estimation. O'Reilly.",
+    "gt_verdict": "UNRESOLVABLE",
+    "gt_rationale": "no such O'Reilly title; a different O'Reilly software-estimation book exists but not this author/title",
+    "evidence_bundle": [
+      {"title": "Software Estimation Without Guessing", "url": "https://www.oreilly.com/library/view/software-estimation-without/9781680507409/",
+       "domain": "oreilly.com", "snippet": "a different O'Reilly software estimation book; no Anderson/Whitfield Epistemic Calibration title found",
+       "tier": "T1_GOLD"}
+    ],
+    "host_verdict": "UNRESOLVABLE"
+  },
+  {
+    "id": "F4",
+    "category": "not_found",
+    "citation": "Tanaka, H. (2016). The Premortem Method for Technical Projects. Pearson.",
+    "gt_verdict": "UNRESOLVABLE",
+    "gt_rationale": "no such Pearson book; the premortem technique is associated with Gary Klein (HBR 2007), not a Tanaka 2016 Pearson title",
+    "evidence_bundle": [
+      {"title": "Performing a Project Premortem", "url": "https://hbr.org/2007/09/performing-a-project-premortem",
+       "domain": "hbr.org", "snippet": "the premortem technique is attributed to Gary Klein (HBR 2007); no Tanaka Pearson book found",
+       "tier": "T1_GOLD"}
+    ],
+    "host_verdict": "UNRESOLVABLE"
+  },
+  {
+    "id": "C1",
+    "category": "contradiction",
+    "citation": "Kahneman, D. & Tversky, A. (2011). Thinking, Fast and Slow.",
+    "gt_verdict": "UNRESOLVABLE",
+    "gt_rationale": "Tversky died 1996; cannot co-author a 2011 book; Thinking, Fast and Slow is Kahneman sole-authored",
+    "evidence_bundle": [
+      {"title": "Amos Tversky - Wikipedia", "url": "https://en.wikipedia.org/wiki/Amos_Tversky",
+       "domain": "en.wikipedia.org", "snippet": "Amos Tversky (1937-1996), died 1996",
+       "tier": "T2_SILVER"},
+      {"title": "Thinking, Fast and Slow", "url": "https://us.macmillan.com/books/9780374533557/",
+       "domain": "us.macmillan.com", "snippet": "by Daniel Kahneman, 2011, sole author",
+       "tier": "T1_GOLD"}
+    ],
+    "host_verdict": "UNRESOLVABLE"
+  },
+  {
+    "id": "C2",
+    "category": "contradiction",
+    "citation": "Simon, H. (1969). The Mythical Man-Month.",
+    "gt_verdict": "UNRESOLVABLE",
+    "gt_rationale": "The Mythical Man-Month is by Fred Brooks (1975), not Herbert Simon; misattribution is confirmed false",
+    "evidence_bundle": [
+      {"title": "The Mythical Man-Month - Wikipedia", "url": "https://en.wikipedia.org/wiki/The_Mythical_Man-Month",
+       "domain": "en.wikipedia.org", "snippet": "authored by Fred Brooks, 1975 (Addison-Wesley); not by Herbert Simon",
+       "tier": "T2_SILVER"}
+    ],
+    "host_verdict": "UNRESOLVABLE"
+  },
+  {
+    "id": "C3",
+    "category": "contradiction",
+    "citation": "Dijkstra, E. (2020). Go To Statement Considered Harmful.",
+    "gt_verdict": "UNRESOLVABLE",
+    "gt_rationale": "Dijkstra died 2002; a 2020 publication is impossible; the actual letter is 1968 (CACM)",
+    "evidence_bundle": [
+      {"title": "Edsger W. Dijkstra - Wikipedia", "url": "https://en.wikipedia.org/wiki/Edsger_W._Dijkstra",
+       "domain": "en.wikipedia.org", "snippet": "Edsger Dijkstra died August 6, 2002",
+       "tier": "T2_SILVER"},
+      {"title": "Go To Statement Considered Harmful (1968)", "url": "https://homepages.cwi.nl/~storm/teaching/reader/Dijkstra68.pdf",
+       "domain": "cwi.nl", "snippet": "the original letter is a 1968 CACM communication; cannot be a 2020 publication",
+       "tier": "T1_GOLD"}
+    ],
+    "host_verdict": "UNRESOLVABLE"
+  },
+  {
+    "id": "C4",
+    "category": "contradiction",
+    "citation": "Shannon, C. (2015). A Mathematical Theory of Communication.",
+    "gt_verdict": "UNRESOLVABLE",
+    "gt_rationale": "Shannon died 2001; a 2015 publication is impossible; the actual paper is 1948 (Bell System Technical Journal)",
+    "evidence_bundle": [
+      {"title": "Claude Shannon - Wikipedia", "url": "https://en.wikipedia.org/wiki/Claude_Shannon",
+       "domain": "en.wikipedia.org", "snippet": "Claude Shannon died February 24, 2001",
+       "tier": "T2_SILVER"},
+      {"title": "Claude Shannon (1916-2001)", "url": "https://www.nature.com/articles/35071223",
+       "domain": "nature.com", "snippet": "Shannon 1916-2001; A Mathematical Theory of Communication published 1948 in the Bell System Technical Journal",
+       "tier": "T1_GOLD"}
+    ],
+    "host_verdict": "UNRESOLVABLE"
+  }
+]

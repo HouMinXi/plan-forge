@@ -8,6 +8,7 @@ import sys
 import tempfile
 
 from plan_forge import api
+from plan_forge import parser
 from plan_forge.arbitration import surface, bundle, capture
 from plan_forge.corpus.record import CorpusRecorder
 
@@ -44,6 +45,12 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="V",
     )
     cap.add_argument("--rationale", default=None, metavar="R")
+
+    ext = sub.add_parser(
+        "extract-citations",
+        help="Extract citations from plan External Voices section",
+    )
+    ext.add_argument("--plan-path", required=True, metavar="PATH")
 
     return parser
 
@@ -181,17 +188,32 @@ def _cmd_capture(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_extract_citations(args: argparse.Namespace) -> int:
+    try:
+        with open(args.plan_path, encoding="utf-8") as fh:
+            plan_text = fh.read()
+    except OSError as exc:
+        print(json.dumps({"error": str(exc)}))
+        return 1
+
+    parsed = parser.parse(plan_text)
+    print(json.dumps(parsed.citations))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Entry point for the skill runner; returns exit code."""
-    parser = _build_parser()
-    args = parser.parse_args(argv)
+    argparser = _build_parser()
+    args = argparser.parse_args(argv)
 
     if args.subcommand == "analyze":
         return _cmd_analyze(args)
     if args.subcommand == "capture":
         return _cmd_capture(args)
+    if args.subcommand == "extract-citations":
+        return _cmd_extract_citations(args)
 
-    parser.print_help()
+    argparser.print_help()
     return 2
 
 
