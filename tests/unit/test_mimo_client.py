@@ -131,6 +131,83 @@ class TestMimoJsonParse:
             assert resp.reasoning == "bad"
 
 
+class TestMimoThinkingControl:
+    """Lock the disable_thinking flag and max_tokens=4096 behavior."""
+
+    def test_default_no_thinking_kwarg(self):
+        """Default instance: SDK create() kwargs must NOT contain thinking."""
+        with patch("plan_forge.llm.mimo_client.anthropic.Anthropic") as m_cls:
+            sdk = MagicMock()
+            m_cls.return_value = sdk
+            sdk.messages.create.return_value = _stub_messages_response()
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = MimoClient(api_key="fake")
+            c._cache = cache
+            c.call("test", cache_key_inputs={"t": "1"})
+            kwargs = sdk.messages.create.call_args.kwargs
+            assert "thinking" not in kwargs
+
+    def test_disable_thinking_true_injects_kwarg(self):
+        """disable_thinking=True: SDK create() gets thinking disabled."""
+        with patch("plan_forge.llm.mimo_client.anthropic.Anthropic") as m_cls:
+            sdk = MagicMock()
+            m_cls.return_value = sdk
+            sdk.messages.create.return_value = _stub_messages_response()
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = MimoClient(api_key="fake", disable_thinking=True)
+            c._cache = cache
+            c.call("test", cache_key_inputs={"t": "2"})
+            kwargs = sdk.messages.create.call_args.kwargs
+            assert kwargs["thinking"] == {"type": "disabled"}
+
+    def test_max_tokens_4096(self):
+        """All instances: SDK create() uses max_tokens=4096."""
+        with patch("plan_forge.llm.mimo_client.anthropic.Anthropic") as m_cls:
+            sdk = MagicMock()
+            m_cls.return_value = sdk
+            sdk.messages.create.return_value = _stub_messages_response()
+            cache = MagicMock()
+            cache.get.return_value = None
+            cache.set.return_value = None
+            c = MimoClient(api_key="fake")
+            c._cache = cache
+            c.call("test", cache_key_inputs={"t": "3"})
+            kwargs = sdk.messages.create.call_args.kwargs
+            assert kwargs["max_tokens"] == 4096
+
+    def test_cache_key_isolation(self):
+        """disable_thinking flag must isolate cache keys."""
+        with patch("plan_forge.llm.mimo_client.anthropic.Anthropic") as m_cls:
+            sdk = MagicMock()
+            m_cls.return_value = sdk
+            sdk.messages.create.return_value = _stub_messages_response()
+
+            cache_default = MagicMock()
+            cache_default.get.return_value = None
+            cache_default.set.return_value = None
+            cache_disabled = MagicMock()
+            cache_disabled.get.return_value = None
+            cache_disabled.set.return_value = None
+
+            inst_default = MimoClient(api_key="x")
+            inst_default._cache = cache_default
+            inst_disabled = MimoClient(api_key="x", disable_thinking=True)
+            inst_disabled._cache = cache_disabled
+
+            inputs = {"plan": "same", "ttl_class": "canonical",
+                      "prompt_version": "v0"}
+            inst_default.call("test", cache_key_inputs=inputs)
+            inst_disabled.call("test", cache_key_inputs=inputs)
+
+            key_default = cache_default.get.call_args.args[0]
+            key_disabled = cache_disabled.get.call_args.args[0]
+            assert key_default != key_disabled
+
+
 @pytest.mark.live
 def test_mimo_call_live():
     import os
