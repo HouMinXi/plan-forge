@@ -1,6 +1,18 @@
 # P5 Fail Fixture
 
 Module Designs and T-row outputs are asymmetric in both directions.
+compute_hash is in Module Designs but not listed in any T-row.
+serialize_record is listed in a T-row and defined in Requirements
+but has no Module Designs entry.
+
+## Requirements
+
+The implementation requires a serialization helper:
+
+```python
+def serialize_record(data: dict) -> str:
+    pass
+```
 
 ## Module Designs
 
