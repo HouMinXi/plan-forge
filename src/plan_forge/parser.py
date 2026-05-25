@@ -98,11 +98,9 @@ _HEDGE_RE = re.compile(
 # SC row: first cell matches SC-N or SC-Na (e.g., SC-1, SC-2a, SC-2b)
 _SC_ROW_RE = re.compile(r'^SC-(\d+)([a-z]?)$', re.IGNORECASE)
 
-# Citation pattern for External Voices: Author(s) + year + title start.
-# Accepts "Lastname (Year). Title." and the common academic form
-# "Lastname, A. (Year). Title." where author initials follow the surname.
-# A coauthor introduced by "&" may also carry initials.
-# Rejects non-citation bullets (no four-digit year following the author).
+# Citation pattern for External Voices -- APA inline order:
+# "Lastname (Year). Title." and "Lastname, A. (Year). Title."
+# where the year immediately follows the author block.
 _CITATION_RE = re.compile(
     r'^[A-Z][a-zA-Z\-]+'
     r'(?:,?\s+[A-Z]\.(?:\s*[A-Z]\.)*)?'
@@ -114,6 +112,28 @@ _CITATION_RE = re.compile(
     r'\(?(\d{4})\)?'
     r'\.?\s+'
     r'["*]?[A-Z]'
+)
+
+# Bibliography-order citation: "Surname, *Title* (Year)." or
+# "Surname et al., \"Title\" (Year)." -- year follows the title.
+# Precision anchors: (1) starts with capitalized surname token,
+# (2) a 4-digit year in parentheses appears somewhere in the item.
+# A plain prose bullet without (YYYY) or that starts with a
+# lowercase/article word does not match.
+_CITATION_BIBLIO_RE = re.compile(
+    r'^[A-Z][a-zA-Z\-]+'           # lead surname
+    r'(?:'                           # optional coauthor / et al block
+    r',\s+[A-Z]\.'                   # ", A." initial
+    r'|\s+et\s+al\.?'               # " et al."
+    r'|\s*&\s*[A-Z][a-zA-Z\-]+'     # " & Surname"
+    r')*'
+    r',\s*'                          # comma before title/venue (required)
+    r'(?:'                           # title must be *italic* or "quoted"
+    r'\*[^*]+\*'                     # *italic title*
+    r'|"[^"]+"'                      # "quoted title"
+    r')'
+    r'[^(]*'                         # any venue text before year
+    r'\(\d{4}\)\.?',                  # (YYYY) optionally followed by a period
 )
 
 # G9 quantitative claim patterns (prose only; not inside code blocks or
@@ -565,10 +585,13 @@ def _extract_citations(plan: ParsedPlan, lines: list[str]) -> None:
         if not in_ext_voices:
             continue
 
-        # Check list items
+        # Check list items -- APA inline or bibliography order
         if stripped.startswith(('-', '*', '+')):
             item = stripped.lstrip('-*+ ').strip()
-            if _CITATION_RE.match(item):
+            if (
+                _CITATION_RE.match(item)
+                or _CITATION_BIBLIO_RE.match(item)
+            ):
                 plan.citations.append(item)
 
 

@@ -1,5 +1,9 @@
 """Unit tests for plan_forge.parser -- covers all 8 ParsedPlan fields."""
+from pathlib import Path
+
 from plan_forge.parser import parse
+
+_FIXTURE_DIR = Path(__file__).parent.parent / "fixtures"
 
 
 # -------------------------------------------------------------------
@@ -384,6 +388,140 @@ def test_parse_citations_non_citation_bullet_rejected():
     )
     assert any('Klein' in c for c in plan.citations)
     assert not any('appendix' in c for c in plan.citations)
+
+
+def test_parse_citations_bibliography_order_italic_title():
+    """Bibliography-order with italic title is extracted.
+
+    "Popper, *The Logic of Scientific Discovery* (1934)." uses the
+    bibliography order (title before year) rather than APA inline
+    (year after author).  The parser must recognize both.
+    """
+    md = (
+        "## External Voices\n"
+        "\n"
+        "- Popper, *The Logic of Scientific Discovery* (1934). Falsifia"
+        "bility doctrine.\n"
+        "- Wucker, *The Gray Rhino* (2016). Gray rhino taxonomy.\n"
+        "- Tetlock & Gardner, *Superforecasting* (2015). Calibration.\n"
+    )
+    plan = parse(md)
+    assert len(plan.citations) == 3, (
+        f"expected 3 bibliography-order citations, got "
+        f"{len(plan.citations)}: {plan.citations}"
+    )
+    assert any('Popper' in c for c in plan.citations)
+    assert any('Wucker' in c for c in plan.citations)
+    assert any('Tetlock' in c for c in plan.citations)
+
+
+def test_parse_citations_bibliography_order_quoted_title():
+    """Bibliography-order with quoted title and et al. is extracted.
+
+    "Flyvbjerg et al., \"Underestimating Costs\" (2002)." and
+    "Kahneman & Tversky, \"Intuitive Prediction\" (1979)." must match.
+    """
+    md = (
+        "## External Voices\n"
+        "\n"
+        '- Flyvbjerg et al., "Underestimating Costs in Public Works"'
+        " (2002). Reference class.\n"
+        '- Kahneman & Tversky, "Intuitive Prediction" (1979).'
+        " Planning fallacy.\n"
+    )
+    plan = parse(md)
+    assert len(plan.citations) == 2, (
+        f"expected 2 citations, got {len(plan.citations)}: "
+        f"{plan.citations}"
+    )
+    assert any('Flyvbjerg' in c for c in plan.citations)
+    assert any('Kahneman' in c for c in plan.citations)
+
+
+def test_parse_citations_bibliography_prose_bullets_rejected():
+    """FP guard: ordinary prose bullets in External Voices yield 0.
+
+    Bullets without a (YYYY) year pattern must never be extracted,
+    even when they start with a capitalized word.  This ensures G8
+    still fires when citations are genuinely absent.
+    """
+    md = (
+        "## External Voices\n"
+        "\n"
+        "- See the literature review appendix for relevant prior work.\n"
+        "- The project team reviewed internal retrospectives.\n"
+        "- Best practices from industry experience informed this plan.\n"
+        "- Industry norms and team judgment were consulted.\n"
+    )
+    plan = parse(md)
+    assert len(plan.citations) == 0, (
+        f"expected 0 citations (prose only), got "
+        f"{len(plan.citations)}: {plan.citations}"
+    )
+
+
+def test_parse_citations_bibliography_fp_fixture():
+    """FP fixture: bibliography-order citations produce >= 1 citation."""
+    with open(
+        _FIXTURE_DIR / "g8_biblio_citation_fp.md", encoding="utf-8"
+    ) as fh:
+        md = fh.read()
+    plan = parse(md)
+    assert len(plan.citations) >= 1, (
+        f"FP fixture must yield >= 1 citation; got {len(plan.citations)}"
+    )
+
+
+def test_parse_citations_bibliography_tp_fixture():
+    """TP fixture: prose-only External Voices yields 0 citations."""
+    with open(
+        _FIXTURE_DIR / "g8_biblio_citation_tp.md", encoding="utf-8"
+    ) as fh:
+        md = fh.read()
+    plan = parse(md)
+    assert len(plan.citations) == 0, (
+        f"TP fixture must yield 0 citations; got "
+        f"{len(plan.citations)}: {plan.citations}"
+    )
+
+
+def test_parse_citations_biblio_prose_bullet_rejected():
+    """Prose bullets with quoted phrases and a year are NOT extracted.
+
+    A bullet like 'Consider "structured data" (2024) for the design.'
+    starts with a capitalized word and contains (YYYY), but lacks the
+    mandatory comma before the quoted title.  The bibliography regex
+    must require the comma so such prose does not suppress G8.
+    """
+    md = (
+        "## External Voices\n"
+        "\n"
+        '- Consider "structured data" (2024) for the design.\n'
+        '- Research "best practices" (2023) methodology.\n'
+        "- Klein (2007). Performing a Project Premortem.\n"
+    )
+    plan = parse(md)
+    assert len(plan.citations) == 1
+    assert any("Klein" in c for c in plan.citations)
+
+
+def test_parse_citations_biblio_known_boundary_capitalized_noun():
+    """Known boundary: capitalized noun + comma + quoted phrase + year matches.
+
+    The bibliography regex cannot distinguish a plan noun like Strategy
+    from a surname without a dictionary.  This documents the behavior so
+    future regex changes do not silently widen it.
+    """
+    md = (
+        "## External Voices\n"
+        "\n"
+        '- Strategy, "Phase Two" (2024) is complete.\n'
+    )
+    plan = parse(md)
+    # This matches because the regex cannot tell a noun from a surname.
+    # It is an acceptable limitation: External Voices in practice contains
+    # only citations, not plan-noun bullets.
+    assert len(plan.citations) == 1
 
 
 # -------------------------------------------------------------------
