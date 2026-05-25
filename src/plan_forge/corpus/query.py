@@ -7,6 +7,10 @@ callers to a pagination DSL now.
 """
 from __future__ import annotations
 
+from datetime import datetime
+
+from sqlalchemy import func
+
 from plan_forge.corpus import db
 from plan_forge.corpus.models import (
     Arbitration,
@@ -116,3 +120,21 @@ def list_arbitrations(
         for r in rows:
             session.expunge(r)
         return rows
+
+
+def oldest_plan_run_date() -> datetime | None:
+    """Return the started_at of the earliest plan_run row, or None.
+
+    None means the plan_runs table is empty (no runs ever recorded).
+    """
+    with db.session_scope() as session:
+        result = session.query(
+            func.min(PlanRun.started_at)
+        ).scalar()
+        return result
+
+
+def count_all_outcomes() -> int:
+    """Return the total number of rows in the outcomes table."""
+    with db.session_scope() as session:
+        return session.query(func.count(Outcome.outcome_id)).scalar() or 0

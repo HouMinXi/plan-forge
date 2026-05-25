@@ -1,11 +1,12 @@
 """CLI entry point for plan-forge.
 
-Provides three subcommands (check, scaffold, audit-retroactive) that
-wrap api.check() and api.scaffold() for shell and CI usage.
+Provides five subcommands (check, scaffold, audit-retroactive,
+record-outcome, abandonment-check) that wrap api.check(), api.scaffold(),
+and the corpus tools for shell and CI usage.
 
 Exit-code contract (CI-facing):
-  0 = PASS / scaffold written
-  1 = engineering or epistemic FAIL
+  0 = PASS / scaffold written / outcome recorded / tombstone absent
+  1 = engineering or epistemic FAIL / outcome type invalid
   2 = reserved by argparse for usage errors
   3 = epistemic VISION (structurally a vision, not a defect)
   4 = runtime/IO error (missing file, unreadable, unexpected exception)
@@ -137,6 +138,47 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     return 0
 
 
+def _tools_dir() -> str:
+    """Return the absolute path to the repo-root tools/ directory.
+
+    main.py lives at src/plan_forge/adapters/cli/main.py; going four
+    parents up reaches the repo root, and tools/ is a sibling of src/.
+    """
+    return str(Path(__file__).resolve().parents[4] / "tools")
+
+
+def _ensure_tools_on_path() -> None:
+    """Add the repo-root tools/ directory to sys.path if absent.
+
+    tools/ is not installed as a package (it is not under src/).  Tests
+    and the CLI both need this one-time path injection to import from it.
+    """
+    tools = _tools_dir()
+    if tools not in sys.path:
+        sys.path.insert(0, tools)
+
+
+def _cmd_record_outcome(args: argparse.Namespace) -> int:
+    """Handle the 'record-outcome' subcommand."""
+    _ensure_tools_on_path()
+    import outcomes_cli  # noqa: PLC0415
+    return outcomes_cli.record(args)
+
+
+def _cmd_abandonment_check(args: argparse.Namespace) -> int:
+    """Handle the 'abandonment-check' subcommand."""
+    _ensure_tools_on_path()
+    import abandon  # noqa: PLC0415
+
+    db_path = Path(args.db_path)
+    result = abandon.check_abandonment(db_path, args.version)
+    if result is not None:
+        print(f"ABANDONMENT.md written: {result}")
+        return 1
+    print("no abandonment triggered")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Build the argparse parser with all subcommands."""
     parser = argparse.ArgumentParser(
@@ -188,7 +230,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "audit-retroactive",
         help="Batch-audit all *.md files in a directory.",
     )
-    audit_p.add_argument("dir", help="Directory containing plan markdown files.")
+    audit_p.add_argument(
+        "dir", help="Directory containing plan markdown files."
+    )
     audit_p.add_argument(
         "--mechanical-only",
         action="store_true",
@@ -202,6 +246,73 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Omit plan text from corpus records; store hash only.",
     )
 
+    # record-outcome
+    ro_p = subparsers.add_parser(
+        "record-outcome",
+        help="Record a predicted-vs-actual outcome into the corpus.",
+    )
+    ro_p.add_argument(
+        "run_id",
+        type=int,
+        help="The plan_run ID the outcome is linked to.",
+    )
+    ro_p.add_argument(
+        "--type",
+        required=True,
+        metavar="OUTCOME_TYPE",
+        help=(
+            "Outcome type: predicted_manifested, "
+            "predicted_did_not_manifest, "
+            "unpredicted_occurred, plan_succeeded."
+        ),
+    )
+    ro_p.add_argument(
+        "--recorder",
+        required=True,
+        help="Name or identifier of the person recording the outcome.",
+    )
+    ro_p.add_argument(
+        "--evidence",
+        default=None,
+        help="Post-hoc evidence text (optional).",
+    )
+    ro_p.add_argument(
+        "--date",
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="Outcome date (default: today UTC).",
+    )
+    ro_p.add_argument(
+        "--finding-id",
+        type=int,
+        default=None,
+        dest="finding_id",
+        help="The finding_id this outcome is linked to (optional).",
+    )
+    ro_p.add_argument(
+        "--notes",
+        default=None,
+        help="Free-text notes (optional).",
+    )
+
+    # abandonment-check
+    ab_p = subparsers.add_parser(
+        "abandonment-check",
+        help=(
+            "Generate ABANDONMENT.md if 6+ months elapsed with 0"
+            " outcomes recorded."
+        ),
+    )
+    ab_p.add_argument(
+        "db_path",
+        help="Path to the corpus SQLite DB file.",
+    )
+    ab_p.add_argument(
+        "--version",
+        required=True,
+        help="Current plan-forge version string (e.g. 0.1.0).",
+    )
+
     return parser
 
 
@@ -209,6 +320,8 @@ _HANDLERS = {
     "check": _cmd_check,
     "scaffold": _cmd_scaffold,
     "audit-retroactive": _cmd_audit,
+    "record-outcome": _cmd_record_outcome,
+    "abandonment-check": _cmd_abandonment_check,
 }
 
 
