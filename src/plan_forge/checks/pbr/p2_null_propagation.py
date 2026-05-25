@@ -1,9 +1,17 @@
 """P2: Null propagation check.
 
-Every nullable field or return type declared in a fenced code block must
-have explicit null-handling semantics.  Orphan optionals (declared but
-never null-checked in the same block, and with no prose escape hatch in
-the 10 lines before the block opening) are reported as HIGH findings.
+A function that returns an optional type (T | None or Optional[T])
+creates an obligation on callers to handle the None case.  When a
+fenced code block declares such a return type and no prose escape hatch
+appears in the 10 lines before the block, P2 reports a HIGH finding.
+
+Prose escape hatches: a 'non-null invariant enforced by ...' sentence or
+a '<!-- plan-forge: p2-ok (reason) -->' HTML comment suppresses the
+finding.
+
+Field declarations (name: T | None) inside model or schema blocks are
+data-shape annotations, not propagation hazards.  P2 does not flag
+them; only function return types are in scope.
 """
 from __future__ import annotations
 
@@ -13,22 +21,14 @@ from plan_forge.verdict import Finding, Severity
 
 
 # ---------------------------------------------------------------------------
-# Nullable declaration patterns (scanned inside fenced code blocks)
+# Nullable function-return patterns (scanned inside fenced code blocks)
 # ---------------------------------------------------------------------------
 
-# Pattern 1: name: Type | None
-_NULLABLE_TYPE_OR_RE = re.compile(
-    r"(\w+)\s*:\s*\w+(?:\[[^\]]+\])?\s*\|\s*None\b"
-)
-# Pattern 2: name: Optional[Type]
-_NULLABLE_OPTIONAL_RE = re.compile(
-    r"(\w+)\s*:\s*Optional\[[^\]]+\]"
-)
-# Pattern 3: def func(...) -> T | None
+# def func(...) -> T | None
 _FUNC_RETURN_OR_RE = re.compile(
     r"def\s+(\w+)\s*\([^)]*\)\s*->\s*\w+(?:\[[^\]]+\])?\s*\|\s*None\b"
 )
-# Pattern 4: def func(...) -> Optional[
+# def func(...) -> Optional[T]
 _FUNC_RETURN_OPT_RE = re.compile(
     r"def\s+(\w+)\s*\([^)]*\)\s*->\s*Optional\["
 )
@@ -39,19 +39,6 @@ _FENCE_RE = re.compile(r"^(`{3,})")
 # Prose escape hatches (searched in 10 lines before the block opening)
 _NON_NULL_INVARIANT_RE = re.compile(r"non-null invariant enforced by\b")
 _P2_OK_RE = re.compile(r"<!--\s*plan-forge:\s*p2-ok")
-
-
-def _null_check_patterns(name: str) -> list[re.Pattern]:
-    """Return list of null-handling patterns for the given nullable name."""
-    n = re.escape(name)
-    return [
-        re.compile(r"\bif\s+" + n + r"\s+is\s+None\b"),
-        re.compile(r"\bif\s+not\s+" + n + r"\b"),
-        re.compile(r"\bif\s+" + n + r"\s+is\s+not\s+None\b"),
-        re.compile(r"\bassert\s+" + n + r"\s+is\s+not\s+None\b"),
-        # default-value pattern: X or <anything> (word, string literal, etc.)
-        re.compile(n + r"\s+or\s+\S"),
-    ]
 
 
 def _has_prose_escape(lines: list[str], block_open_lineno: int) -> bool:
@@ -75,21 +62,17 @@ def _flush_block(
     block_open: int,
     all_lines: list[str],
 ) -> list[Finding]:
-    """Analyze one completed fenced block for orphan optionals."""
+    """Analyze one completed fenced block for orphan optional returns."""
     result: list[Finding] = []
     has_escape = _has_prose_escape(all_lines, block_open)
-    block_text = "\n".join(ln for _, ln in block_lines)
 
-    # Collect all nullable declarations
+    # Collect nullable function-return declarations only.
+    # Field declarations (name: T | None) are data-shape annotations and
+    # are intentionally excluded from this scan.
     nullables: list[tuple[str, int]] = []  # (name, 1-based lineno in file)
 
     for lineno, ln in block_lines:
-        for pattern in (
-            _NULLABLE_TYPE_OR_RE,
-            _NULLABLE_OPTIONAL_RE,
-            _FUNC_RETURN_OR_RE,
-            _FUNC_RETURN_OPT_RE,
-        ):
+        for pattern in (_FUNC_RETURN_OR_RE, _FUNC_RETURN_OPT_RE):
             for m in pattern.finditer(ln):
                 name = m.group(1)
                 nullables.append((name, lineno))
@@ -100,34 +83,24 @@ def _flush_block(
             continue
         seen_names.add(name)
 
-        # Check prose escape hatch (10 lines before block)
         if has_escape:
             continue
 
-        # Check null-handling patterns in the entire block
-        handled = False
-        for pat in _null_check_patterns(name):
-            if pat.search(block_text):
-                handled = True
-                break
-
-        if not handled:
-            result.append(Finding(
-                check_id="P2.orphan_optional",
-                severity=Severity.HIGH,
-                location=f"line:{decl_lineno}",
-                message=(
-                    f"nullable {name!r} declared but no null-check or"
-                    " non-null invariant comment found"
-                ),
-                fix_hint=(
-                    "add 'if X is None' branch, 'assert X is not None'"
-                    " guard, default-value pattern ('X or default'),"
-                    " prose 'non-null invariant enforced by ...'"
-                    " within 10 lines before the block, or inline"
-                    " <!-- plan-forge: p2-ok (reason) --> marker"
-                ),
-            ))
+        result.append(Finding(
+            check_id="P2.orphan_optional",
+            severity=Severity.HIGH,
+            location=f"line:{decl_lineno}",
+            message=(
+                f"function {name!r} returns an optional type"
+                " with no null-handling in scope"
+            ),
+            fix_hint=(
+                "add a '<!-- plan-forge: p2-ok (reason) -->' marker"
+                " within 10 lines before the code block, or add prose"
+                " 'non-null invariant enforced by <reason>' near the"
+                " function definition"
+            ),
+        ))
 
     return result
 
@@ -135,9 +108,9 @@ def _flush_block(
 def check(parsed: ParsedPlan) -> list[Finding]:
     """Run P2 null propagation check on a parsed plan.
 
-    Scans only content inside fenced code blocks.  For each nullable
-    declaration, checks whether a null-handling pattern or prose escape
-    hatch exists.  Returns HIGH finding per unhandled nullable.
+    Scans fenced code blocks for functions whose return type is optional
+    (T | None or Optional[T]).  Reports a HIGH finding when no null-handling
+    pattern or prose escape hatch covers the return value.
     """
     findings: list[Finding] = []
     lines = parsed.raw_text.splitlines()
@@ -160,7 +133,9 @@ def check(parsed: ParsedPlan) -> list[Finding]:
             elif fence == fence_width:
                 in_code_block = False
                 fence_width = ""
-                findings.extend(_flush_block(block_lines, block_open_lineno, lines))
+                findings.extend(
+                    _flush_block(block_lines, block_open_lineno, lines)
+                )
                 block_lines = []
             continue
 

@@ -13,7 +13,7 @@ def _load(name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Mandatory tests
+# Mandatory fixture tests
 # ---------------------------------------------------------------------------
 
 def test_p2_pass_fixture():
@@ -47,11 +47,57 @@ def test_p2_severity():
 
 
 # ---------------------------------------------------------------------------
+# S5 narrowing: schema fields must not fire; function returns must still fire
+# ---------------------------------------------------------------------------
+
+def test_p2_fp_schema_field_fixture():
+    """FP fixture: schema field declarations produce no P2 finding."""
+    parsed = parse(_load("p2_fp_schema_field.md"))
+    findings = p2_null_propagation.check(parsed)
+    p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
+    assert p2_findings == [], (
+        "schema-field nullable declarations must not fire P2,"
+        f" got: {p2_findings}"
+    )
+
+
+def test_p2_tp_func_return_fixture():
+    """TP fixture: function returning optional with no handling fires P2."""
+    parsed = parse(_load("p2_tp_func_return.md"))
+    findings = p2_null_propagation.check(parsed)
+    ids = [f.check_id for f in findings]
+    assert "P2.orphan_optional" in ids, (
+        "function returning optional without null-check must fire P2,"
+        f" got: {ids}"
+    )
+
+
+def test_p2_class_field_no_finding():
+    """Class field 'name: T | None' without null-check does not fire P2."""
+    md = (
+        "# Plan\n\n"
+        "## Data Model\n\n"
+        "```python\n"
+        "class Record:\n"
+        "    profile: dict | None\n"
+        "    label: str | None\n"
+        "```\n"
+    )
+    parsed = parse(md)
+    findings = p2_null_propagation.check(parsed)
+    p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
+    assert p2_findings == [], (
+        "class field declarations must not fire P2,"
+        f" got: {p2_findings}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Edge case tests
 # ---------------------------------------------------------------------------
 
 def test_p2_non_null_invariant_comment():
-    """Nullable with non-null invariant comment 5 lines before block -> NO finding."""
+    """Non-null invariant comment 5 lines before block suppresses finding."""
     md = (
         "# Plan\n\n"
         "## Design\n\n"
@@ -61,59 +107,60 @@ def test_p2_non_null_invariant_comment():
         "\n"
         "\n"
         "```python\n"
-        "def process(data: dict | None) -> str:\n"
-        "    return str(data)\n"
+        "def process() -> dict | None:\n"
+        "    return _store.get('key')\n"
         "```\n"
     )
     parsed = parse(md)
     findings = p2_null_propagation.check(parsed)
     p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
     assert p2_findings == [], (
-        f"non-null invariant comment should suppress finding, got: {p2_findings}"
+        "non-null invariant comment should suppress finding,"
+        f" got: {p2_findings}"
     )
 
 
-def test_p2_default_value_pattern():
-    """Nullable with 'X or default' pattern in same block -> NO finding."""
-    md = (
-        "# Plan\n\n"
-        "## Design\n\n"
-        "```python\n"
-        "def show(label: str | None) -> str:\n"
-        "    display = label or 'unknown'\n"
-        "    return display\n"
-        "```\n"
-    )
-    parsed = parse(md)
-    findings = p2_null_propagation.check(parsed)
-    p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
-    assert p2_findings == [], (
-        f"'or default' pattern should suppress finding, got: {p2_findings}"
-    )
-
-
-def test_p2_optional_type():
-    """Optional[int] with 'if name is None' in same block -> NO finding."""
+def test_p2_non_optional_return_no_finding():
+    """Function with non-optional return type never fires P2."""
     md = (
         "# Plan\n\n"
         "## Design\n\n"
         "```python\n"
         "def compute(value: Optional[int]) -> int:\n"
-        "    if value is None:\n"
-        "        return 0\n"
-        "    return value * 2\n"
+        "    return value or 0\n"
         "```\n"
     )
     parsed = parse(md)
     findings = p2_null_propagation.check(parsed)
     p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
     assert p2_findings == [], (
-        f"Optional type with is None check should pass, got: {p2_findings}"
+        "non-optional return type must not fire P2,"
+        f" got: {p2_findings}"
+    )
+
+
+def test_p2_optional_return_with_escape():
+    """def func() -> Optional[T] with p2-ok escape -> NO finding."""
+    md = (
+        "# Plan\n\n"
+        "## Design\n\n"
+        "<!-- plan-forge: p2-ok callers check for None before use -->\n"
+        "```python\n"
+        "def compute() -> Optional[int]:\n"
+        "    return _lookup()\n"
+        "```\n"
+    )
+    parsed = parse(md)
+    findings = p2_null_propagation.check(parsed)
+    p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
+    assert p2_findings == [], (
+        "p2-ok escape on Optional return should suppress finding,"
+        f" got: {p2_findings}"
     )
 
 
 def test_p2_prose_not_scanned():
-    """Nullable patterns in prose (not in code block) do not trigger findings."""
+    """Nullable patterns in prose (not in code block) do not fire P2."""
     md = (
         "# Plan\n\n"
         "## Overview\n\n"
@@ -124,43 +171,64 @@ def test_p2_prose_not_scanned():
     findings = p2_null_propagation.check(parsed)
     p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
     assert p2_findings == [], (
-        f"prose nullable patterns should not fire, got: {p2_findings}"
+        "prose nullable patterns should not fire,"
+        f" got: {p2_findings}"
     )
 
 
 def test_p2_assert_not_none():
-    """assert X is not None in same block -> NO finding."""
+    """assert on return-value variable fires P2 (variable != func name)."""
     md = (
         "# Plan\n\n"
         "## Design\n\n"
         "```python\n"
-        "def finalize(conn: object | None) -> str:\n"
-        "    assert conn is not None\n"
-        "    return conn.status\n"
+        "def finalize() -> object | None:\n"
+        "    return _connect()\n"
+        "\n"
+        "result = finalize()\n"
+        "assert result is not None\n"
         "```\n"
     )
     parsed = parse(md)
     findings = p2_null_propagation.check(parsed)
     p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
-    assert p2_findings == [], (
-        f"assert not None should suppress finding, got: {p2_findings}"
+    assert "P2.orphan_optional" in [f.check_id for f in findings], (
+        "function with no null-check on its own name must fire P2,"
+        f" got: {p2_findings}"
     )
 
 
 def test_p2_p2_ok_marker():
-    """p2-ok marker within 10 lines before block -> NO finding."""
+    """p2-ok marker within 10 lines before block suppresses finding."""
     md = (
         "# Plan\n\n"
         "## Design\n\n"
         "<!-- plan-forge: p2-ok caller guarantees non-null -->\n"
         "```python\n"
-        "def handler(event: dict | None) -> None:\n"
-        "    process(event)\n"
+        "def handler() -> dict | None:\n"
+        "    return _store.get('event')\n"
         "```\n"
     )
     parsed = parse(md)
     findings = p2_null_propagation.check(parsed)
     p2_findings = [f for f in findings if f.check_id == "P2.orphan_optional"]
     assert p2_findings == [], (
-        f"p2-ok marker should suppress finding, got: {p2_findings}"
+        "p2-ok marker should suppress finding,"
+        f" got: {p2_findings}"
     )
+
+
+def test_p2_funcname_is_none_still_fires():
+    """Checking the function object (not return value) does not suppress P2."""
+    md = (
+        "```python\n"
+        "def load() -> Config | None:\n"
+        "    pass\n"
+        "\n"
+        "if load is None:\n"
+        "    return\n"
+        "```"
+    )
+    plan = parse(md)
+    findings = p2_null_propagation.check(plan)
+    assert any(f.check_id == "P2.orphan_optional" for f in findings)
