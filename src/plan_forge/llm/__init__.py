@@ -3,5 +3,6 @@
 # the registry is empty and build_active_list() returns nothing.
 from . import anthropic_client  # noqa: F401
 from . import deepseek_client   # noqa: F401
+from . import glm_client        # noqa: F401
 from . import kimi_client       # noqa: F401
 from . import mimo_client       # noqa: F401
