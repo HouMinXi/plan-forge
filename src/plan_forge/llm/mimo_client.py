@@ -23,10 +23,11 @@ from plan_forge.llm.client import (
     cache_key,
     parse_verdict_response,
 )
+from plan_forge.llm.credentials import base_url_for
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import MIMO_WEB_SEARCH_TOOL
 
-_MIMO_BASE_URL = "https://token-plan-cn.xiaomimimo.com/anthropic"
+_MIMO_DEFAULT_BASE_URL = "https://token-plan-cn.xiaomimimo.com/anthropic"
 _MIMO_MODEL = "mimo-v2.5-pro"
 
 
@@ -45,7 +46,7 @@ class MimoClient:
         # endpoint confirmed via claude_mimo() alias in shell config
         self._client = anthropic.Anthropic(
             api_key=api_key,
-            base_url=_MIMO_BASE_URL,
+            base_url=base_url_for("mimo", _MIMO_DEFAULT_BASE_URL),
         )
         self._cache = SqlAlchemyCacheBackend()
         self._disable_thinking = disable_thinking

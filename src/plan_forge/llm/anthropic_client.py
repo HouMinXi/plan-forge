@@ -22,6 +22,7 @@ from plan_forge.llm.client import (
     cache_key,
     parse_verdict_response,
 )
+from plan_forge.llm.credentials import base_url_for
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import ANTHROPIC_WEB_SEARCH_TOOL
 
@@ -34,7 +35,11 @@ class AnthropicClient:
     model = "claude-opus-4-7"
 
     def __init__(self, api_key: str) -> None:
-        self._client = anthropic.Anthropic(api_key=api_key)
+        kwargs: dict = {"api_key": api_key}
+        resolved_url = base_url_for("anthropic", None)
+        if resolved_url is not None:
+            kwargs["base_url"] = resolved_url
+        self._client = anthropic.Anthropic(**kwargs)
         self._cache = SqlAlchemyCacheBackend()
 
     def health_check(self) -> HealthStatus:

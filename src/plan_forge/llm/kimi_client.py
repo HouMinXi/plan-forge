@@ -21,10 +21,11 @@ from plan_forge.llm.client import (
     cache_key,
     parse_verdict_response,
 )
+from plan_forge.llm.credentials import base_url_for
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import KIMI_WEB_SEARCH_TOOL
 
-_KIMI_BASE_URL = "https://api.moonshot.ai/v1"
+_KIMI_DEFAULT_BASE_URL = "https://api.moonshot.ai/v1"
 
 
 @register("kimi")
@@ -37,7 +38,7 @@ class KimiClient:
     def __init__(self, api_key: str) -> None:
         self._client = openai.OpenAI(
             api_key=api_key,
-            base_url=_KIMI_BASE_URL,
+            base_url=base_url_for("kimi", _KIMI_DEFAULT_BASE_URL),
         )
         self._cache = SqlAlchemyCacheBackend()
 

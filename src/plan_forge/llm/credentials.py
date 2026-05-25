@@ -82,3 +82,15 @@ def default_resolver() -> ChainedCredentialResolver:
     return ChainedCredentialResolver(
         [PassCredentialResolver(), EnvCredentialResolver()]
     )
+
+
+def base_url_for(provider: str, default: str | None) -> str | None:
+    """Return PLAN_FORGE_<PROVIDER>_BASE_URL if set, else default.
+
+    An unset or blank env var leaves the caller's default unchanged,
+    so existing setups with no override are byte-identical to today.
+    """
+    v = os.environ.get(
+        f"PLAN_FORGE_{provider.upper()}_BASE_URL", ""
+    ).strip()
+    return v or default

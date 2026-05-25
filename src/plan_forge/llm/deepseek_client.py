@@ -25,10 +25,11 @@ from plan_forge.llm.client import (
     cache_key,
     parse_verdict_response,
 )
+from plan_forge.llm.credentials import base_url_for
 from plan_forge.llm.registry import register
 from plan_forge.llm.tool_use import DEEPSEEK_WEB_SEARCH_TOOL
 
-_DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+_DEEPSEEK_DEFAULT_BASE_URL = "https://api.deepseek.com"
 _DEEPSEEK_MODEL = "deepseek-chat"
 
 
@@ -46,7 +47,7 @@ class DeepSeekClient:
     def __init__(self, api_key: str) -> None:
         self._client = openai.OpenAI(
             api_key=api_key,
-            base_url=_DEEPSEEK_BASE_URL,
+            base_url=base_url_for("deepseek", _DEEPSEEK_DEFAULT_BASE_URL),
         )
         self._cache = SqlAlchemyCacheBackend()
 
