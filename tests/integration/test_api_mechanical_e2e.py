@@ -60,23 +60,22 @@ def _assert_verdict_structure(result: Verdict, fixture_name: str) -> None:
 def test_api_mechanical_on_pass_well_formed():
     """End-to-end on the well-formed pass fixture.
 
-    Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
+    Snapshot values (updated after P1 table-definition exemption):
 
     engineering = FAIL
-      Reason: F3.unverified_cross_plan_ref (HIGH) and P1.orphan_identifier
-      (HIGH) drive the FAIL.  F2.duplicate_fact also fires (the well-formed
-      fixture reuses common phrases across sections, e.g. the Reference
-      Class table values appear in multiple rows) but F2 is LOW and does not
-      affect the engineering verdict.  P1 fires because section headings used
-      as identifiers are not referenced elsewhere in the plan body.
+      Reason: F3.unverified_cross_plan_ref (HIGH) drives the FAIL.
+      F2.duplicate_fact fires (LOW, repeated Reference Class phrases) but
+      does not affect the verdict.  P1 fires once ("phase 2" in the Goal
+      anchor) but SC-N IDs are no longer orphans: they are defined as
+      first-cell entries in the Success Criteria table.
 
-    total findings = 26
-      Breakdown: F2 x 20, F3 x 1, P1 x 5.
+    total findings = 22
+      Breakdown: F2 x 20, F3 x 1, P1 x 1.
 
     check_id_counts = {
         'F2.duplicate_fact': 20,
         'F3.unverified_cross_plan_ref': 1,
-        'P1.orphan_identifier': 5,
+        'P1.orphan_identifier': 1,
     }
     """
     fixture = "pass_well_formed.md"
@@ -91,9 +90,9 @@ def test_api_mechanical_on_pass_well_formed():
     )
 
     # Snapshot: total finding count
-    assert len(result.findings) == 26, (
+    assert len(result.findings) == 22, (
         f"{fixture}: finding count snapshot mismatch "
-        f"(got {len(result.findings)}, expected 26). "
+        f"(got {len(result.findings)}, expected 22). "
         "Update snapshot if a check was added or removed."
     )
 
@@ -101,7 +100,7 @@ def test_api_mechanical_on_pass_well_formed():
     expected_counts = {
         "F2.duplicate_fact": 20,
         "F3.unverified_cross_plan_ref": 1,
-        "P1.orphan_identifier": 5,
+        "P1.orphan_identifier": 1,
     }
     actual_counts = _check_id_counts(result.findings)
     assert actual_counts == expected_counts, (
@@ -118,24 +117,22 @@ def test_api_mechanical_on_pass_well_formed():
 def test_api_mechanical_on_fail_missing_premortem():
     """End-to-end on the fixture that omits the Pre-mortem section.
 
-    Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
+    Snapshot values (updated after P1 table-definition exemption):
 
     engineering = FAIL
-      Reason: same drivers as pass_well_formed -- F3.unverified_cross_plan_ref
-      (HIGH) and P1.orphan_identifier (HIGH) cause the FAIL.  F2.duplicate_fact
-      fires (LOW) on the shared table/prose structure but does not affect the
-      verdict.  The missing Pre-mortem is an epistemic (G-layer) concern, not
-      a mechanical one, so the F/PBR layer adds no finding for it here.
+      Reason: F3.unverified_cross_plan_ref (HIGH) drives the FAIL.
+      F2.duplicate_fact fires (LOW) on shared table/prose but does not
+      affect the verdict.  P1 fires once ("phase 2" in the Goal anchor).
+      SC-N IDs are no longer P1 orphans: they are defined as first-cell
+      entries in the Success Criteria table.
 
-    total findings = 25
-      Breakdown: F2 x 20, F3 x 1, P1 x 4.
-      (One fewer P1 than pass_well_formed because the Pre-mortem section
-      heading is absent, reducing the identifier count by 1.)
+    total findings = 22
+      Breakdown: F2 x 20, F3 x 1, P1 x 1.
 
     check_id_counts = {
         'F2.duplicate_fact': 20,
         'F3.unverified_cross_plan_ref': 1,
-        'P1.orphan_identifier': 4,
+        'P1.orphan_identifier': 1,
     }
     """
     fixture = "fail_missing_premortem.md"
@@ -150,9 +147,9 @@ def test_api_mechanical_on_fail_missing_premortem():
     )
 
     # Snapshot: total finding count
-    assert len(result.findings) == 25, (
+    assert len(result.findings) == 22, (
         f"{fixture}: finding count snapshot mismatch "
-        f"(got {len(result.findings)}, expected 25). "
+        f"(got {len(result.findings)}, expected 22). "
         "Update snapshot if a check was added or removed."
     )
 
@@ -160,7 +157,7 @@ def test_api_mechanical_on_fail_missing_premortem():
     expected_counts = {
         "F2.duplicate_fact": 20,
         "F3.unverified_cross_plan_ref": 1,
-        "P1.orphan_identifier": 4,
+        "P1.orphan_identifier": 1,
     }
     actual_counts = _check_id_counts(result.findings)
     assert actual_counts == expected_counts, (
@@ -177,24 +174,22 @@ def test_api_mechanical_on_fail_missing_premortem():
 def test_api_mechanical_on_fail_no_g9_anchor():
     """End-to-end on the fixture that omits G9 inline anchors on the Goal.
 
-    Snapshot values (captured 2026-05-19, mechanical layer F1-F7 + P1/P2/P5):
+    Snapshot values (updated after P1 table-definition exemption):
 
-    engineering = FAIL
-      Reason: P1.orphan_identifier (HIGH) drives the FAIL.  F2.duplicate_fact
-      also fires (LOW, same repeated phrases in the Reference Class table) but
-      does not affect the verdict.
-      Neither F3 nor any anchor-specific mechanical check fires here because
-      the G9 anchor check is a G-layer (epistemological) gate; the F-layer
-      only flags structural issues.
+    engineering = PASS
+      SC-N IDs in the Success Criteria table are now treated as defined
+      there (first-cell table definition), so P1 no longer fires on them.
+      This fixture has no F3 cross-plan references and no other HIGH
+      findings, so engineering reaches PASS.  The missing G9 anchor is
+      an epistemic (G-layer) concern, not a mechanical one; the F/PBR
+      layer correctly produces no finding for it.
 
-    total findings = 23
-      Breakdown: F2 x 20, P1 x 3.
-      (F3 absent: this fixture has no explicit cross-plan references.
-      P1 count is 3 because the fixture has fewer section identifiers.)
+    total findings = 20
+      Breakdown: F2 x 20.
+      (P1 absent: all former P1 findings were SC-N table-defined IDs.)
 
     check_id_counts = {
         'F2.duplicate_fact': 20,
-        'P1.orphan_identifier': 3,
     }
     """
     fixture = "fail_no_g9_anchor.md"
@@ -203,22 +198,21 @@ def test_api_mechanical_on_fail_no_g9_anchor():
     _assert_verdict_structure(result, fixture)
 
     # Snapshot: engineering verdict
-    assert result.engineering == EngineeringVerdict.FAIL, (
+    assert result.engineering == EngineeringVerdict.PASS, (
         f"{fixture}: engineering snapshot mismatch. "
         "Update this snapshot with justification if severity logic changed."
     )
 
     # Snapshot: total finding count
-    assert len(result.findings) == 23, (
+    assert len(result.findings) == 20, (
         f"{fixture}: finding count snapshot mismatch "
-        f"(got {len(result.findings)}, expected 23). "
+        f"(got {len(result.findings)}, expected 20). "
         "Update snapshot if a check was added or removed."
     )
 
     # Snapshot: per-check_id distribution
     expected_counts = {
         "F2.duplicate_fact": 20,
-        "P1.orphan_identifier": 3,
     }
     actual_counts = _check_id_counts(result.findings)
     assert actual_counts == expected_counts, (

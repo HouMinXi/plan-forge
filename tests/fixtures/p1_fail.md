@@ -16,5 +16,5 @@ Use `exotic_widget` - wait, this line also mentions it.
 Actually the line above already counts as the second mention.
 We need a truly orphan identifier below.
 
-The `singleton_factory` is introduced here exactly once with no
+The `SingletonFactory` component is introduced here exactly once with no
 cross-reference, no marker, and no second mention anywhere.
