@@ -1,0 +1,1038 @@
+{
+  "fixtures_count": 12,
+  "conditions": [
+    "ds_evidence",
+    "ds_noevidence",
+    "mimo_thinkon_evidence",
+    "mimo_thinkon_noevidence",
+    "mimo_thinkoff_evidence",
+    "mimo_thinkoff_noevidence",
+    "host"
+  ],
+  "summaries": {
+    "ds_evidence": {
+      "resolvable": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "not_found": {
+        "total": 4,
+        "correct": 2,
+        "conservative": 2,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "contradiction": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "overall": {
+        "total": 12,
+        "correct": 10,
+        "conservative": 2,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      }
+    },
+    "ds_noevidence": {
+      "resolvable": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "not_found": {
+        "total": 4,
+        "correct": 0,
+        "conservative": 4,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "contradiction": {
+        "total": 4,
+        "correct": 2,
+        "conservative": 1,
+        "dangerous": 1,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "overall": {
+        "total": 12,
+        "correct": 6,
+        "conservative": 5,
+        "dangerous": 1,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      }
+    },
+    "mimo_thinkon_evidence": {
+      "resolvable": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "not_found": {
+        "total": 4,
+        "correct": 3,
+        "conservative": 1,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "contradiction": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "overall": {
+        "total": 12,
+        "correct": 11,
+        "conservative": 1,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      }
+    },
+    "mimo_thinkon_noevidence": {
+      "resolvable": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "not_found": {
+        "total": 4,
+        "correct": 0,
+        "conservative": 3,
+        "dangerous": 1,
+        "unparseable": 0,
+        "fabricated": 1,
+        "errors": 0
+      },
+      "contradiction": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "overall": {
+        "total": 12,
+        "correct": 8,
+        "conservative": 3,
+        "dangerous": 1,
+        "unparseable": 0,
+        "fabricated": 1,
+        "errors": 0
+      }
+    },
+    "mimo_thinkoff_evidence": {
+      "resolvable": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "not_found": {
+        "total": 4,
+        "correct": 2,
+        "conservative": 2,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "contradiction": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "overall": {
+        "total": 12,
+        "correct": 10,
+        "conservative": 2,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      }
+    },
+    "mimo_thinkoff_noevidence": {
+      "resolvable": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "not_found": {
+        "total": 4,
+        "correct": 0,
+        "conservative": 4,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "contradiction": {
+        "total": 4,
+        "correct": 3,
+        "conservative": 0,
+        "dangerous": 1,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "overall": {
+        "total": 12,
+        "correct": 7,
+        "conservative": 4,
+        "dangerous": 1,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      }
+    },
+    "host": {
+      "resolvable": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "not_found": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "contradiction": {
+        "total": 4,
+        "correct": 4,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      },
+      "overall": {
+        "total": 12,
+        "correct": 12,
+        "conservative": 0,
+        "dangerous": 0,
+        "unparseable": 0,
+        "fabricated": 0,
+        "errors": 0
+      }
+    }
+  },
+  "details": [
+    {
+      "citation_id": "R1",
+      "condition": "ds_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R2",
+      "condition": "ds_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R3",
+      "condition": "ds_evidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R4",
+      "condition": "ds_evidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F1",
+      "condition": "ds_evidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F2",
+      "condition": "ds_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F3",
+      "condition": "ds_evidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F4",
+      "condition": "ds_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C1",
+      "condition": "ds_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C2",
+      "condition": "ds_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C3",
+      "condition": "ds_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C4",
+      "condition": "ds_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R1",
+      "condition": "ds_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R2",
+      "condition": "ds_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R3",
+      "condition": "ds_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R4",
+      "condition": "ds_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F1",
+      "condition": "ds_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F2",
+      "condition": "ds_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F3",
+      "condition": "ds_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F4",
+      "condition": "ds_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C1",
+      "condition": "ds_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "DANGEROUS",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C2",
+      "condition": "ds_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C3",
+      "condition": "ds_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C4",
+      "condition": "ds_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R1",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R2",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R3",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R4",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F1",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F2",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F3",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F4",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C1",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C2",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C3",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C4",
+      "condition": "mimo_thinkon_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R1",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R2",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R3",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R4",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F1",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F2",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "DANGEROUS",
+      "error": null,
+      "fabricated_resolution": true
+    },
+    {
+      "citation_id": "F3",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F4",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C1",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C2",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C3",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C4",
+      "condition": "mimo_thinkon_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R1",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R2",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R3",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R4",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F1",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F2",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F3",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F4",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C1",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C2",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C3",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C4",
+      "condition": "mimo_thinkoff_evidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R1",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R2",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R3",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R4",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F1",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F2",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F3",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F4",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "UNCERTAIN",
+      "normalized_verdict": "UNCERTAIN",
+      "grade": "CONSERVATIVE",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C1",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "RESOLVED_BY_KNOWLEDGE",
+      "normalized_verdict": "RESOLVED",
+      "grade": "DANGEROUS",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C2",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C3",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C4",
+      "condition": "mimo_thinkoff_noevidence",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R1",
+      "condition": "host",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R2",
+      "condition": "host",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R3",
+      "condition": "host",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "R4",
+      "condition": "host",
+      "raw_verdict": "RESOLVED_VIA_SEARCH",
+      "normalized_verdict": "RESOLVED",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F1",
+      "condition": "host",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F2",
+      "condition": "host",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F3",
+      "condition": "host",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "F4",
+      "condition": "host",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C1",
+      "condition": "host",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C2",
+      "condition": "host",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C3",
+      "condition": "host",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    },
+    {
+      "citation_id": "C4",
+      "condition": "host",
+      "raw_verdict": "UNRESOLVABLE",
+      "normalized_verdict": "UNRESOLVABLE",
+      "grade": "CORRECT",
+      "error": null,
+      "fabricated_resolution": false
+    }
+  ]
+}
