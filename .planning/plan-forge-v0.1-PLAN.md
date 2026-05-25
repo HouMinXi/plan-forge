@@ -2548,7 +2548,7 @@ self-check after library implementation.
 - `## Pre-mortem` section present
 - 5 ranked failure causes (PM1-PM5)
 - Each has `early_warning` field and `counter` field
-- PM1-PM5 ordered by perceived probability (PM1 most likely failure)
+- PM1-PM5 ordered by perceived probability (PM1 = most probable)
 
 ### G4 Probability Calibration -- PASS (with caveat)
 
