@@ -100,3 +100,32 @@ def test_all_four_questions_answered():
     parsed = parse(md)
     findings = check(parsed)
     assert findings == []
+
+
+def test_fp_headings_only():
+    """Q1 and Q2 answered only via subsection heading text -> no G7 findings.
+
+    FP fixture: Q1 keyword ('does this need') and Q2 keyword ('consumer')
+    appear only in '### Qn:' heading lines, not in body prose.  Before the
+    fix the parser excluded heading lines from section.body, causing Q1 and
+    Q2 to read as unaddressed even though the headings answered them.
+    Q3 and Q4 also have body prose that satisfies their keywords.
+    """
+    findings = check(_load("g7_fp_headings_only.md"))
+    assert findings == [], (
+        f"unexpected findings on heading-only fixture: {findings}"
+    )
+
+
+def test_tp_missing_consumers():
+    """Scope Challenge that omits consumers question -> G7.missing_consumers.
+
+    TP fixture: Q2 heading and 'consumer'/'demand signal' are both absent;
+    the fix must not suppress this real defect.
+    """
+    findings = check(_load("g7_tp_missing_consumers.md"))
+    ids = [f.check_id for f in findings]
+    assert "G7.missing_consumers" in ids
+    for f in findings:
+        if f.check_id == "G7.missing_consumers":
+            assert f.severity == Severity.HIGH

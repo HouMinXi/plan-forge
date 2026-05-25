@@ -11,7 +11,7 @@ Each missing question group emits a HIGH finding.
 from __future__ import annotations
 
 from plan_forge.checks.epistemic._sections import find_section
-from plan_forge.parser import ParsedPlan
+from plan_forge.parser import ParsedPlan, ParsedSection
 from plan_forge.verdict import Finding, Severity
 
 # Per-question keyword groups (case-insensitive substring match).
@@ -46,6 +46,28 @@ _QUESTIONS: list[tuple[str, str, frozenset[str], str]] = [
 ]
 
 
+def _section_full_text(
+    parsed: ParsedPlan, section: ParsedSection
+) -> str:
+    """Return all raw lines within the section range, including headings.
+
+    The parser accumulates only non-heading lines into section.body, so
+    subsection headings such as '### Q1: Does this need to exist?' are
+    absent from body.  Slicing parsed.raw_text by the section's
+    line_start/line_end recovers those heading lines, making keyword
+    matching work when a plan answers scope questions via subsection
+    headings rather than inline prose.
+    """
+    lines = parsed.raw_text.splitlines()
+    # line_start and line_end are 1-based; slice is 0-based
+    start = max(0, section.line_start - 1)
+    end = min(len(lines), section.line_end)
+    if start >= end:
+        # Malformed section bounds: fall back to body only.
+        return section.body
+    return "\n".join(lines[start:end])
+
+
 def check(parsed: ParsedPlan) -> list[Finding]:
     """G7: verify Scope Challenge section answers all four question groups."""
     findings: list[Finding] = []
@@ -69,10 +91,12 @@ def check(parsed: ParsedPlan) -> list[Finding]:
         ))
         return findings
 
-    body_lower = section.body.lower()
+    # Search the full section text (body + subsection headings) so that
+    # plans answering questions via '### Qn: ...' headings are not penalised.
+    scan_lower = _section_full_text(parsed, section).lower()
 
     for check_id, message, keywords, fix_hint in _QUESTIONS:
-        if not any(kw in body_lower for kw in keywords):
+        if not any(kw in scan_lower for kw in keywords):
             findings.append(Finding(
                 check_id=check_id,
                 severity=Severity.HIGH,
