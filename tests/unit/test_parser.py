@@ -305,6 +305,87 @@ def test_parse_citations_only_in_external_voices():
     assert 'Tetlock' in plan.citations[0]
 
 
+def test_parse_citations_author_initials_single():
+    """Author initials after surname are now accepted.
+
+    "Kahneman, D. (2011). Title." and "Brooks, F. P. (1975). Title."
+    were previously dropped because the regex had no initials group.
+    """
+    md = (
+        "## External Voices\n"
+        "\n"
+        "- Kahneman, D. (2011). Thinking, Fast and Slow.\n"
+        "- Brooks, F. P. (1975). The Mythical Man-Month.\n"
+        "- Dijkstra, E. (2020). Go To Statement Considered Harmful.\n"
+    )
+    plan = parse(md)
+    assert len(plan.citations) == 3, (
+        f"expected 3 citations, got {len(plan.citations)}: "
+        f"{plan.citations}"
+    )
+    assert any('Kahneman' in c for c in plan.citations)
+    assert any('Brooks' in c for c in plan.citations)
+    assert any('Dijkstra' in c for c in plan.citations)
+
+
+def test_parse_citations_author_initials_coauthor():
+    """Coauthor with initials after ampersand is now accepted.
+
+    "Zhang, L. & Kumar, R. (2019). Title." was previously dropped.
+    """
+    md = (
+        "## External Voices\n"
+        "\n"
+        "- Zhang, L. & Kumar, R. (2019). Theory of X.\n"
+    )
+    plan = parse(md)
+    assert len(plan.citations) == 1, (
+        f"expected 1 citation, got {len(plan.citations)}: "
+        f"{plan.citations}"
+    )
+    assert any('Zhang' in c for c in plan.citations)
+
+
+def test_parse_citations_no_regression_existing_forms():
+    """Existing citation forms without initials are still extracted."""
+    md = (
+        "## External Voices\n"
+        "\n"
+        "- Klein (2007). Performing a Project Premortem.\n"
+        "- Flyvbjerg et al. (2002). Underestimating Costs.\n"
+        "- Popper (1934). The Logic of Scientific Discovery.\n"
+    )
+    plan = parse(md)
+    assert len(plan.citations) == 3, (
+        f"expected 3 citations, got {len(plan.citations)}: "
+        f"{plan.citations}"
+    )
+    assert any('Klein' in c for c in plan.citations)
+    assert any('Flyvbjerg' in c for c in plan.citations)
+    assert any('Popper' in c for c in plan.citations)
+
+
+def test_parse_citations_non_citation_bullet_rejected():
+    """Non-citation bullets in External Voices are NOT extracted.
+
+    A plain prose bullet like "See the appendix for the full list."
+    must not be treated as a citation.
+    """
+    md = (
+        "## External Voices\n"
+        "\n"
+        "- See the appendix for the full list.\n"
+        "- Klein (2007). Performing a Project Premortem.\n"
+    )
+    plan = parse(md)
+    assert len(plan.citations) == 1, (
+        f"expected 1 citation (Klein only), got {len(plan.citations)}: "
+        f"{plan.citations}"
+    )
+    assert any('Klein' in c for c in plan.citations)
+    assert not any('appendix' in c for c in plan.citations)
+
+
 # -------------------------------------------------------------------
 # test_parse_anchors
 # -------------------------------------------------------------------

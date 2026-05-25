@@ -99,13 +99,17 @@ _HEDGE_RE = re.compile(
 _SC_ROW_RE = re.compile(r'^SC-(\d+)([a-z]?)$', re.IGNORECASE)
 
 # Citation pattern for External Voices: Author(s) + year + title start.
-# Permissive: capture more than reject.
-# The original regex had a bug with
-# the optional paren group consuming the year paren.  Simplified to
-# match Author(s) (YYYY). Title or Author(s), YYYY. Title.
+# Accepts "Lastname (Year). Title." and the common academic form
+# "Lastname, A. (Year). Title." where author initials follow the surname.
+# A coauthor introduced by "&" may also carry initials.
+# Rejects non-citation bullets (no four-digit year following the author).
 _CITATION_RE = re.compile(
     r'^[A-Z][a-zA-Z\-]+'
-    r'(?:\s*&\s*[A-Z][a-zA-Z\-]+|\s+et\s+al\.?)?'
+    r'(?:,?\s+[A-Z]\.(?:\s*[A-Z]\.)*)?'
+    r'(?:'
+    r'\s*&\s*[A-Z][a-zA-Z\-]+(?:,?\s+[A-Z]\.(?:\s*[A-Z]\.)*)?'
+    r'|\s+et\s+al\.?'
+    r')?'
     r',?\s*'
     r'\(?(\d{4})\)?'
     r'\.?\s+'
