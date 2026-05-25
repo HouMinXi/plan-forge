@@ -1341,6 +1341,8 @@ def build_evidence_bundle(finding: Finding) -> str:
 
 ### tools/abandon.py
 
+<!-- plan-forge: p2-ok (returns None when the abandonment clause is not triggered; documented in the docstring) -->
+
 ```python
 def check_abandonment(db_path: Path, plan_forge_version: str) -> Path | None:
     """Per SC-19: if corpus_db's plan_runs has >= 1 entry older than 6
@@ -1950,7 +1952,7 @@ LLM web search SCs (R1 E1):
 | Gray Rhino | Denial Reason (why people will ignore) | Counter |
 |------------|---------------------------------------|---------|
 | plan-forge itself overscopes: G1-G10 + corpus_db + arbitration + outcomes + G9 + G10 + LLM web search is ambitious for v0.1; will exceed 16 weeks | "R1 review concluded 16-17 weeks is honest; user accepted; the scope IS the scope" | 4 descope checkpoints (week 5/8/12/16); each checkpoint lists explicit items to drop; mechanical layer (F1-F7 + 5 of 10 G mechanical) is non-negotiable but everything else negotiable |
-| Self-dogfood (SC-2) becomes infinite regress: PLAN keeps failing own enforcement (especially after G9/G10 added), requires perpetual revision | "it is just polish, almost there" | T04 self-dogfood is best-effort, not gate; T33 (post-implementation) is the real self-dogfood; if T33 fails, redesign the failing check rather than rewriting PLAN |
+| Self-dogfood (SC-2b) becomes infinite regress: PLAN keeps failing own enforcement (especially after G9/G10 added), requires perpetual revision | "it is just polish, almost there" | T04 self-dogfood is best-effort, not gate; T33 (post-implementation) is the real self-dogfood; if T33 fails, redesign the failing check rather than rewriting PLAN |
 | Retroactive audit (SC-3) coverage < 60% on forge Phase 2 LEARNINGS-documented problems | "AI panel converged on these plans, so plans must be fine; tool must be wrong" OR "60% threshold is arbitrary" | This is the empirical-grounding commitment. Coverage < 60% means mechanical layer too weak; redesign mechanical rather than lowering threshold or abandoning |
 | Multi-LLM provider integration brittleness with web search (tool_use API breaks silently) | "we tested it works today" | Integration tests run weekly via CI; per-provider feature-detection at startup; mechanical-only fallback if all providers regress |
 | G10 recursive evidence tier classifier is itself LLM-dependent; cannot fully escape AI-detect-AI circularity | "MANIFESTO Section 11 already acknowledges this" | Per MANIFESTO Section 11/12: G10 mitigates not eliminates; 5 of 10 G mechanical parts independent of LLM; ground truth corpus (LEARNINGS + corpus_db) is L3 independent layer; outcomes (L5) is empirical validation; abandonment clause (SC-19) is self-falsifying |
@@ -2307,7 +2309,7 @@ R2 cross-AI reviewers should pay particular attention to:
 
 1. **R1 fix sufficiency**: are R1 BLOCKERs B1-B5 fully closed by the
    changes documented in Appendix B? Specifically:
-   - B1: is the `Accommodation` section now a coherent honest scope
+   - B1: is the Accommodation section now a coherent honest scope
      statement, not a covert bypass?
    - B2: does the new 16-week estimate honestly reflect new-category
      uncertainty without falling back to inside-view bait?
@@ -2831,3 +2833,9 @@ audit confirmation):
 - Memory: feedback_ai_review_strategic_limits.md (verified via
   forge-code Phase 2; 50+ rounds did not catch B1 / B2 / B5
   consensus on first pass)
+
+## Cross-Plan References
+
+- Phase 3: forge-code Phase 3 and later, tracked under
+  ~/code/forge/.planning/phases/. plan-forge is intended to gate each
+  forge phase plan before its AI review panel runs.
