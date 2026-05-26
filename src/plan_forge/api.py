@@ -32,7 +32,7 @@ def check_mechanical(
     plan_text: str,
     preamble: str | None = None,
 ) -> Verdict:
-    """Run mechanical checks (F1-F7 + PBR P1/P2/P5/P6) only.
+    """Run mechanical checks (F1-F9 + PBR P1/P2/P5/P6) only.
 
     Does NOT run epistemological gates (G1-G8).  Use check()
     for the full pipeline.
@@ -44,7 +44,7 @@ def check_mechanical(
 
     Returns:
         Verdict; epistemic is always VISION in mechanical-only mode
-        (no G-gates run); findings cover F1-F7 + P1/P2/P5/P6.
+        (no G-gates run); findings cover F1-F9 + P1/P2/P5/P6.
     """
     parsed = parse(plan_text)
     findings = mechanical.run(parsed, preamble=preamble)
@@ -95,7 +95,7 @@ def check(
     arbitration_mode: str = "off",
     host_evidence: dict[str, list] | None = None,
 ) -> Verdict:
-    """Run all gates (F1-F7 + PBR + G1-G8) and return aggregated Verdict.
+    """Run all gates (F1-F9 + PBR + G1-G8) and return aggregated Verdict.
 
     Args:
         plan_text: raw markdown text of the plan document.
@@ -146,7 +146,7 @@ def check(
     # Functional gates -- not wrapped in corpus error handling so gate errors propagate.
     findings: list[Finding] = []
 
-    # Layer 1: mechanical F1-F7 + PBR P1/P2/P5/P6 (PBR delegated inside mechanical.run)
+    # Layer 1: mechanical F1-F9 + PBR P1/P2/P5/P6 (PBR delegated inside mechanical.run)
     findings.extend(mechanical.run(parsed, preamble=preamble))
 
     # Layer 2: epistemic G1-G8

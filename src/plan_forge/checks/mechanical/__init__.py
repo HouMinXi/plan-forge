@@ -1,7 +1,7 @@
 """Mechanical checks package.
 
-Exposes run(parsed, preamble=None) which aggregates F1-F8 findings
-in stable order (F1 first, F8 last).
+Exposes run(parsed, preamble=None) which aggregates F1-F9 findings
+in stable order (F1 first, F9 last).
 """
 from __future__ import annotations
 
@@ -19,11 +19,12 @@ from . import (
     f6_preamble_body,
     f7_ascii,
     f8_plan_consistency,
+    f9_plan_length,
 )
 
 
 def run(parsed: ParsedPlan, preamble: str | None = None) -> list[Finding]:
-    """Run all mechanical checks F1-F8 on a parsed plan.
+    """Run all mechanical checks F1-F9 on a parsed plan.
 
     Args:
         parsed: ParsedPlan produced by parser.parse().
@@ -31,7 +32,7 @@ def run(parsed: ParsedPlan, preamble: str | None = None) -> list[Finding]:
                   When None, F6 returns [].
 
     Returns:
-        Concatenated Finding list in F1..F8, P1, P2, P5, P6 order.
+        Concatenated Finding list in F1..F9, P1, P2, P5, P6 order.
     """
     findings: list[Finding] = []
     findings.extend(f1_sc_traceability.check(parsed))
@@ -42,5 +43,6 @@ def run(parsed: ParsedPlan, preamble: str | None = None) -> list[Finding]:
     findings.extend(f6_preamble_body.check(parsed, preamble=preamble))
     findings.extend(f7_ascii.check(parsed))
     findings.extend(f8_plan_consistency.check(parsed))
+    findings.extend(f9_plan_length.check(parsed))
     findings.extend(pbr.run(parsed))
     return findings

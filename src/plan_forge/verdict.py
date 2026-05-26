@@ -26,7 +26,7 @@ class Severity(str, Enum):
 
 
 class EngineeringVerdict(str, Enum):
-    """Two-value engineering verdict derived from F1-F7 + PBR + G mechanical."""
+    """Two-value engineering verdict derived from F1-F9 + PBR + G mechanical."""
     PASS = "PASS"
     FAIL = "FAIL"
 

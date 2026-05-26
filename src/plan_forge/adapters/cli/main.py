@@ -190,7 +190,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # check
     check_p = subparsers.add_parser(
         "check",
-        help="Check a plan document against G1-G10 and F1-F7 gates.",
+        help="Check a plan document against G1-G10 and F1-F9 gates.",
     )
     check_p.add_argument("plan", help="Path to the plan markdown file.")
     check_p.add_argument(
