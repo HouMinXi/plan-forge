@@ -99,3 +99,110 @@ def test_empty_risks_blocker():
     assert len(findings) == 1
     assert findings[0].check_id == "G2.no_risks"
     assert findings[0].severity == Severity.BLOCKER
+
+
+def test_risks_and_mitigations_heading_no_no_risks():
+    """'## Risks & Mitigations' with a table -> G2.no_risks must not fire.
+
+    The parser cannot extract bucket-structured risks from a flat table
+    without Known/Gray/Black sub-sections, but the heading itself confirms
+    the author provided a risks section.  Suppressing G2.no_risks avoids
+    a false positive on this common heading variant.
+    """
+    parsed = _load("g2_risks_and_mitigations.md")
+    findings = check(parsed)
+    ids = [f.check_id for f in findings]
+    assert "G2.no_risks" not in ids, (
+        "G2.no_risks must not fire when '## Risks & Mitigations' is present;"
+        f" got: {ids}"
+    )
+
+
+def test_risks_and_mitigations_fixture():
+    """Fixture-based version: g2_risks_and_mitigations.md -> no G2.no_risks."""
+    parsed = _load("g2_risks_and_mitigations.md")
+    assert parsed.risks == [], (
+        "fixture has no bucket sub-sections; risks should be empty"
+    )
+    # The section heading exists and must suppress no_risks
+    section_headings = list(parsed.sections.keys())
+    assert any('risk' in h.lower() for h in section_headings), (
+        f"Expected a 'Risks' section heading; got {section_headings}"
+    )
+    findings = check(parsed)
+    assert "G2.no_risks" not in [f.check_id for f in findings]
+
+
+def test_no_risks_section_still_fires():
+    """Teeth: a plan with no heading containing 'Risks' -> G2.no_risks still fires."""
+    parsed = parse(
+        "# Plan\n\n"
+        "## Overview\n\n"
+        "No risk discussion here.\n\n"
+        "## Design\n\n"
+        "Pure design notes without a risks section.\n"
+    )
+    findings = check(parsed)
+    ids = [f.check_id for f in findings]
+    assert "G2.no_risks" in ids, (
+        f"G2.no_risks must fire when no Risks heading exists; got: {ids}"
+    )
+
+
+def test_prose_risks_word_does_not_count():
+    """Scope guard: 'risk' in prose body must not suppress G2.no_risks.
+
+    Only ATX headings are matched; a body paragraph mentioning 'risk' as
+    a word does not constitute a Risks section.
+    """
+    parsed = parse(
+        "# Plan\n\n"
+        "## Overview\n\n"
+        "There is a risk that the schedule slips.\n"
+    )
+    findings = check(parsed)
+    ids = [f.check_id for f in findings]
+    assert "G2.no_risks" in ids, (
+        "Prose mention of 'risk' must not suppress G2.no_risks; "
+        f"got: {ids}"
+    )
+
+
+def test_risks_and_mitigations_english_word_heading():
+    """'## Risks and Mitigations' (English 'and') -> G2.no_risks must not fire.
+
+    The substring match on 'risk' in the heading covers both the ampersand
+    form ('Risks & Mitigations') and the English-word form ('Risks and
+    Mitigations').  This locks the behavior so future regex changes cannot
+    silently regress the English-word variant.
+    """
+    parsed = _load("g2_risks_and_word.md")
+    findings = check(parsed)
+    ids = [f.check_id for f in findings]
+    assert "G2.no_risks" not in ids, (
+        "G2.no_risks must not fire when '## Risks and Mitigations' "
+        f"is present; got: {ids}"
+    )
+
+
+def test_h1_risk_title_no_h2_fires_no_risks():
+    """H1 title containing 'risk' with no ## Risks section -> G2.no_risks fires.
+
+    Before the level filter was added, an H1 like '# Risk Management Plan'
+    would match the heading scan and suppress G2.no_risks even though the
+    author never added a ## Risks section.  The level >= 2 guard closes
+    this gap.
+    """
+    parsed = parse(
+        "# Risk Management Plan\n\n"
+        "## Overview\n\n"
+        "This plan manages risks at a high level.\n\n"
+        "## Timeline\n\n"
+        "Q1: design, Q2: build, Q3: ship.\n"
+    )
+    findings = check(parsed)
+    ids = [f.check_id for f in findings]
+    assert "G2.no_risks" in ids, (
+        "G2.no_risks must fire when only the H1 title contains 'risk' "
+        f"and no ## Risks section exists; got: {ids}"
+    )

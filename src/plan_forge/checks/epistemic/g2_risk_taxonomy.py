@@ -5,6 +5,12 @@ Checks that parsed.risks contains entries in all three required buckets
 denial_reason and black swans carry a survival_plan.
 
 Reuses the parser's ParsedRisk list directly; no body re-parsing needed.
+
+The G2.no_risks finding is suppressed when a section whose heading
+contains 'risks' exists at the heading level, even if the parser could not
+populate parsed.risks (e.g. a flat table without Known/Gray/Black sub-
+sections).  This avoids a false positive for headings like '## Risks &
+Mitigations'.  The match is restricted to ATX headings, not prose.
 """
 from __future__ import annotations
 
@@ -14,11 +20,29 @@ from plan_forge.verdict import Finding, Severity
 _REQUIRED_BUCKETS = ("known", "gray_rhino", "black_swan")
 
 
+def _has_risks_section(parsed: ParsedPlan) -> bool:
+    """Return True when an H2+ heading contains 'risk' (case-insensitive).
+
+    Only ATX headings at level 2 or deeper are checked; the H1 document
+    title is excluded so a title like '# Risk Management Plan' with no
+    ## Risks section does not falsely suppress G2.no_risks.
+    """
+    for heading, section in parsed.sections.items():
+        if section.level >= 2 and 'risk' in heading.lower():
+            return True
+    return False
+
+
 def check(parsed: ParsedPlan) -> list[Finding]:
     """G2: verify 3-class risk taxonomy structure and per-risk fields."""
     findings: list[Finding] = []
 
     if not parsed.risks:
+        if _has_risks_section(parsed):
+            # Section exists but parser found no bucket structure.
+            # Do not fire no_risks -- the author has a risks section;
+            # they need to add Known/Gray Rhino/Black Swan sub-sections.
+            return findings
         findings.append(Finding(
             check_id="G2.no_risks",
             severity=Severity.BLOCKER,
