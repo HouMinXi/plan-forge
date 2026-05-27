@@ -9,12 +9,18 @@
 - [ ] **GATE-02**: Existing G8 TP fixture still fires (anti-gutting verified)
 - [ ] **GATE-03**: Empty External Voices section distinction: a truly empty section
       should remain BLOCKER; unparseable-but-present content becomes HIGH
+- [ ] **GATE-01T**: Bug-inject teeth -- revert the severity change (set back to
+      BLOCKER), confirm the prose-cited FP fixture now fires as BLOCKER, restore,
+      confirm it returns to HIGH. Proves the severity is the operative guard.
 
 ### F2 Structural Noise (GATE-04)
 
 - [ ] **GATE-04**: F2 no longer fires on capitalized n-grams that are plan section
       headings (e.g. "Implementation Tasks", "Success Criteria")
 - [ ] **GATE-05**: F2 TP fixture still fires on genuine repeated factual assertions
+- [ ] **GATE-04T**: Bug-inject teeth -- disable the heading-aware exemption, confirm
+      the structural-term FP fixture now fires F2 findings, restore, confirm silence.
+      Proves the exemption is load-bearing, not that F2 is disabled.
 
 ### GSD Format Compatibility (GSD-01)
 
