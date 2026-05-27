@@ -45,7 +45,13 @@ fires on capitalized plan section headings
      for those terms
   3. Existing G8 true-positive fixture still fires (anti-gutting verified) and
      F2 genuine-repetition fixture still fires
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 08-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
+- [ ] 08-02-PLAN.md -- G8 severity fix: no_citation BLOCKER -> HIGH for non-empty body
+- [ ] 08-03-PLAN.md -- F2 heading-words suppression guard
+- [ ] 08-04-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
 #### Phase 9: GSD Format Compatibility
 
