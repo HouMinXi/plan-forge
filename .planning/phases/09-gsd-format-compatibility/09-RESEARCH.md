@@ -405,21 +405,16 @@ G-gate awareness and serve as the authoritative content templates.
 All claims in this research were verified via source code reads and api.check
 live runs. No user confirmation needed.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does the no_citation BLOCKER on 03-CONTEXT.md need to be fixed?**
-   - What we know: GSD-02 targets "0 G-gate no_section BLOCKERs". G8.A.no_citation
-     is not a no_section finding. 03-CONTEXT.md already passes GSD-02 as stated.
-   - What's unclear: Whether the user intends Phase 9 to also clear G8.A.no_citation
-     on 03-CONTEXT.md.
-   - Recommendation: Plan the no_citation fix as a separate optional task. Run
-     verification without it first; if the user is satisfied with 0 no_section
-     BLOCKERs, the no_citation issue is out of scope for this phase.
+   RESOLVED: YES -- user decision captured in 09-CONTEXT.md and 09-DISCUSSION-LOG.md.
+   03-CONTEXT.md G8.A.no_citation fix is in scope for Phase 9. Plan 09-02 Task 2
+   adds one APA-format citation to External Voices to clear the BLOCKER.
 
 2. **Are the two ROADMAP files intended to stay in sync?**
-   - What we know: They are currently byte-for-byte identical in content and
-     both need the same sections added.
-   - Recommendation: Edit them independently and verify each separately.
+   RESOLVED: Edit them independently and verify each separately. Both need the
+   same 6 G-gate sections; 09-01 has separate tasks for each ROADMAP file.
 
 ## Environment Availability
 

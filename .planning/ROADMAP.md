@@ -65,7 +65,11 @@ checked with api.check (was 36)
      Class") in the appropriate heading positions
   2. Running api.check (mechanical-only, llm_clients=[]) on a forge GSD planning
      doc returns 0 G-gate no_section BLOCKERs (down from 36)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 09-01-PLAN.md -- Add G-gate sections to both forge milestone ROADMAP files
+- [ ] 09-02-PLAN.md -- Add G-gate sections to 01-CONTEXT.md; fix citation in 03-CONTEXT.md; verify all 5 docs
 
 ## Progress
 
@@ -73,8 +77,8 @@ checked with api.check (was 36)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 8. Source Code Precision Fixes | v0.1.1 | 0/TBD | Not started | - |
-| 9. GSD Format Compatibility | v0.1.1 | 0/TBD | Not started | - |
+| 8. Source Code Precision Fixes | v0.1.1 | 0/4 | Not started | - |
+| 9. GSD Format Compatibility | v0.1.1 | 0/2 | Not started | - |
 
 ## Traceability
 
