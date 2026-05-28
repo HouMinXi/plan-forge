@@ -80,6 +80,22 @@ class TestG8PartA:
         assert len(fail_case) == 1
         assert fail_case[0].severity == Severity.BLOCKER
 
+    def test_prose_cited_emits_high(self):
+        parsed = parse(_load_fixture("g8_prose_cited_fp.md"))
+        findings = check(parsed, [])
+        no_cit = [f for f in findings
+                  if f.check_id == "G8.A.no_citation"]
+        assert len(no_cit) == 1
+        assert no_cit[0].severity == Severity.HIGH
+
+    def test_empty_body_emits_blocker(self):
+        parsed = parse(_load_fixture("g8_empty_body_blocker.md"))
+        findings = check(parsed, [])
+        no_cit = [f for f in findings
+                  if f.check_id == "G8.A.no_citation"]
+        assert len(no_cit) == 1
+        assert no_cit[0].severity == Severity.BLOCKER
+
 
 class TestG8PartB:
     def test_unresolvable_blocker(self):
