@@ -68,8 +68,8 @@ checked with api.check (was 36)
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md -- Add G-gate sections to both forge milestone ROADMAP files
-- [ ] 09-02-PLAN.md -- Add G-gate sections to 01-CONTEXT.md; fix citation in 03-CONTEXT.md; verify all 5 docs
+- [x] 09-01-PLAN.md -- Add G-gate sections to both forge milestone ROADMAP files
+- [x] 09-02-PLAN.md -- Add G-gate sections to 01-CONTEXT.md; fix citation in 03-CONTEXT.md; verify all 5 docs
 
 ## Progress
 
@@ -78,7 +78,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 8. Source Code Precision Fixes | v0.1.1 | 0/4 | Not started | - |
-| 9. GSD Format Compatibility | v0.1.1 | 0/2 | Not started | - |
+| 9. GSD Format Compatibility | v0.1.1 | 2/2 | Complete   | 2026-05-28 |
 
 ## Traceability
 
