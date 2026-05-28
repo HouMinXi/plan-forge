@@ -96,9 +96,13 @@ def check(
     # we treat "at least one citation present" as the mechanical proxy.
     # True non-AI provenance is a Part B / human concern.
     if len(parsed.citations) == 0:
+        severity = (
+            Severity.BLOCKER if not body.strip()
+            else Severity.HIGH
+        )
         findings.append(Finding(
             check_id="G8.A.no_citation",
-            severity=Severity.BLOCKER,
+            severity=severity,
             location="External Voices",
             message="no citation found in External Voices section",
             fix_hint="add at least one citation in Author (Year) format",
