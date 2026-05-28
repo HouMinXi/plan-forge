@@ -58,8 +58,14 @@ def check(parsed: ParsedPlan, **kwargs) -> list[Finding]:
     # Sort: descending count, then alphabetical for tie-breaking
     flagged.sort(key=lambda x: (-len(x[1]), x[0]))
 
+    heading_words: set[str] = set()
+    for heading in parsed.sections:
+        heading_words.update(heading.lower().split())
+
     findings: list[Finding] = []
     for ng, headings in flagged[:_FINDING_CAP]:
+        if set(ng.split()) <= heading_words:
+            continue
         findings.append(Finding(
             check_id="F2.duplicate_fact",
             severity=Severity.LOW,
