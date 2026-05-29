@@ -447,13 +447,15 @@ A1 was verified via live execution. The planner must use the full three-way unio
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Worktree name for Phase 10**
+   - **RESOLVED:** `.worktrees/f2-structural-fp/` on branch `fix/f2-structural-fp-v012`
    - Phase 8 used `.worktrees/fix-precision/` on `fix/precision-v011`
    - Recommendation: `.worktrees/f2-structural-fp/` on `fix/f2-structural-fp-v012`
 
 2. **Pre-existing test failure**
+   - **RESOLVED:** `test_version_is_alpha2` (unrelated version string mismatch; plans note this as pre-existing)
    - `test_version_is_alpha2` fails on baseline (version mismatch, unrelated to Phase 10)
    - Plans must note "1 pre-existing failure expected" to prevent confusion
 
