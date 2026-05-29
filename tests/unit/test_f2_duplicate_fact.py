@@ -76,3 +76,21 @@ def test_f2_genuine_phrase_not_suppressed():
     assert "F2.duplicate_fact" in ids, (
         f"Expected genuine repetition still fires, got: {ids}"
     )
+
+
+def test_f2_structural_fp_suppressed():
+    """Structural template phrases must not trigger F2."""
+    parsed = parse(_load("f2_structural_fp.md"))
+    findings = f2_duplicate_fact.check(parsed)
+    assert findings == [], (
+        f"Expected structural phrases suppressed, got: {findings}"
+    )
+
+
+def test_f2_signoff_fp_suppressed():
+    """Signed-off-by author names must not trigger F2."""
+    parsed = parse(_load("f2_signoff_fp.md"))
+    findings = f2_duplicate_fact.check(parsed)
+    assert findings == [], (
+        f"Expected signoff names suppressed, got: {findings}"
+    )
