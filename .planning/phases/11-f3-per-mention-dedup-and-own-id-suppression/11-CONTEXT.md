@@ -31,10 +31,12 @@ file and its tests.
   leading BOM/blank before checking; accept line 2 only if line 1 is empty).
   The closing `---` must appear before the first `#` heading line -- any `---`
   after a heading is treated as a horizontal rule, not a frontmatter delimiter.
-  If opening `---` not found on line 1, skip frontmatter scan entirely. Extract `phase:` leading digits and
-  zero-pad `plan:` to 2 digits with `.zfill(2)`. Construct own ID "{phase}-{plan}"
-  (e.g., "08-02"). Both phase number AND plan number MUST be zero-padded --
-  `plan: 2` (unquoted YAML) must yield `"02"` not `"2"` to match `_SUBPLAN_RE`.
+  If opening `---` not found on line 1, skip frontmatter scan entirely.
+  Extract leading digits from `phase:` field AND digits from `plan:` field;
+  BOTH must be zero-padded with `.zfill(2)` so the constructed ID matches
+  `_SUBPLAN_RE` format (e.g., `phase: 8, plan: 2` -> `"08-02"`, not `"8-02"`).
+  If EITHER field is absent, skip own-id construction entirely -- partial IDs
+  like `"-02"` or `"08-"` are invalid and must not enter `own`.
 - **D-04:** Frontmatter scan and heading scan are ADDITIVE (union), not exclusive
   fallback. Even when frontmatter yields an own ID, continue to scan the first
   ATX heading and add any IDs found there. This prevents silent failure when
@@ -102,6 +104,11 @@ file and its tests.
 ### Integration Points
 - `_own_id_set(parsed)` is called in `check()` at line 100; return value feeds into
   `verified` set. No signature change needed.
+
+### GSD PLAN.md Has No ATX Headings (empirical, verified by cross-AI review)
+- Checked: 10-01, 10-02, 09-02 PLAN.md files all start with `<objective>` XML,
+  no `#` headings. Heading scan returns empty set for GSD format.
+  Frontmatter is the ONLY effective own-ID path for GSD plans.
 
 ### Existing Test Compatibility (D-01 regression risk: NONE)
 - Verified via cross-AI review: existing tests in `test_f3_cross_plan_invariant.py`
