@@ -117,7 +117,12 @@ reference, and never fires on identifiers that are defined within the same plan
   2. Running check_mechanical on a plan that mentions its own plan ID (e.g. "08-02"
      appears in 08-02-PLAN.md) produces zero F3 findings for that self-reference
   3. Genuine cross-plan reference TP fixture still fires (anti-gutting verified)
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
+- [ ] 11-02-PLAN.md -- F3 dedup key fix + frontmatter own-ID extension + bite test
+- [ ] 11-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
 ## Progress
 
@@ -128,7 +133,7 @@ reference, and never fires on identifiers that are defined within the same plan
 | 8. Source Code Precision Fixes | v0.1.1 | 4/4 | Complete | 2026-05-28 |
 | 9. GSD Format Compatibility | v0.1.1 | 2/2 | Complete | 2026-05-28 |
 | 10. F2 Structural FP Reduction | v0.1.2 | 3/3 | Complete   | 2026-05-29 |
-| 11. F3 Per-Mention Dedup       | v0.1.3 | 0/? | Not started | - |
+| 11. F3 Per-Mention Dedup       | v0.1.3 | 0/3 | Planned     | - |
 
 ## Traceability
 
