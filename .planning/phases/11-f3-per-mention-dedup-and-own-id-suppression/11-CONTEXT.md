@@ -105,16 +105,20 @@ file and its tests.
 - `_own_id_set(parsed)` is called in `check()` at line 100; return value feeds into
   `verified` set. No signature change needed.
 
-### GSD PLAN.md Has No ATX Headings (empirical, verified by cross-AI review)
-- Checked: 10-01, 10-02, 09-02 PLAN.md files all start with `<objective>` XML,
-  no `#` headings. Heading scan returns empty set for GSD format.
-  Frontmatter is the ONLY effective own-ID path for GSD plans.
+### GSD PLAN.md ATX Headings (current known behavior, not a format guarantee)
+- Observed: 10-01, 10-02, 09-02 PLAN.md files start with `<objective>` XML, no
+  `#` headings. Heading scan currently returns empty set for these GSD plans.
+  Frontmatter is the primary effective own-ID path for current GSD plans.
+  D-04's union design means future plans with ATX headings work correctly too.
 
-### Existing Test Compatibility (D-01 regression risk: NONE)
-- Verified via cross-AI review: existing tests in `test_f3_cross_plan_invariant.py`
-  assert finding existence and severity (`check_id in ids`, `all HIGH`), NOT finding
-  count. D-01 reduces duplicate findings but does not remove all findings, so all
-  existing assertions continue to hold. New fixtures must test exact count behavior.
+### Existing Test Compatibility (D-01 regression risk: NONE -- empirically confirmed)
+- Unit tests (`test_f3_cross_plan_invariant.py`): assert existence/severity only
+  (`check_id in ids`), NOT count. D-01 safe.
+- Integration tests (`test_api_mechanical_e2e.py`): assert `len(result.findings)`
+  and `check_id_counts` snapshots. HOWEVER empirically verified by cross-AI review:
+  the two integration fixtures (`pass_well_formed.md`, `fail_missing_premortem.md`)
+  each contain only 1 unique F3 claim, so D-01 does not change their F3 count.
+  Executor must confirm this still holds after adding new Phase 11 F3 fixtures.
 - `seen` set is local to `check()`. Key change is self-contained.
 
 ### ParsedPlan.raw_text
@@ -143,6 +147,10 @@ file and its tests.
 ## Deferred Ideas
 
 - P1.orphan_identifier false positives -- separate gate, separate phase.
+- `_PHASE_RE` self-reference (e.g., "Phase 8" in a Phase 8 plan) is not suppressed
+  by subplan-format own-IDs ("08-02"). This is a pre-existing gap; fixing it would
+  require `_own_id_set` to also construct `"phase 8"` / `"phase-8"` tokens, which
+  is out of Phase 11 scope.
 - G2 heading-flex (listed in CLAUDE.md Backlog) -- deferred to a later phase.
 - Configurable own-ID extraction -- 1 consumer today, deferred.
 
