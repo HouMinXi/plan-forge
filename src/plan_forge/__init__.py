@@ -2,5 +2,5 @@
 from .api import check, scaffold
 from .verdict import Verdict, Finding, Severity
 
-__version__ = "0.1.0a2"
+__version__ = "0.1.1"
 __all__ = ["check", "scaffold", "Verdict", "Finding", "Severity"]
