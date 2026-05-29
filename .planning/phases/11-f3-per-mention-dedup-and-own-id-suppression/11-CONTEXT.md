@@ -27,8 +27,11 @@ file and its tests.
 ### F3-02: Own-ID Extraction from YAML Frontmatter
 
 - **D-03:** Extend `_own_id_set()` to scan the YAML frontmatter block at the top
-  of raw_text (`---` on line 1, then fields until the closing `---` which must
-  appear before the first `#` heading). Extract `phase:` leading digits and
+  of raw_text. Frontmatter detection: opening `---` must be on line 1 (strip
+  leading BOM/blank before checking; accept line 2 only if line 1 is empty).
+  The closing `---` must appear before the first `#` heading line -- any `---`
+  after a heading is treated as a horizontal rule, not a frontmatter delimiter.
+  If opening `---` not found on line 1, skip frontmatter scan entirely. Extract `phase:` leading digits and
   zero-pad `plan:` to 2 digits with `.zfill(2)`. Construct own ID "{phase}-{plan}"
   (e.g., "08-02"). Both phase number AND plan number MUST be zero-padded --
   `plan: 2` (unquoted YAML) must yield `"02"` not `"2"` to match `_SUBPLAN_RE`.
@@ -99,6 +102,12 @@ file and its tests.
 ### Integration Points
 - `_own_id_set(parsed)` is called in `check()` at line 100; return value feeds into
   `verified` set. No signature change needed.
+
+### Existing Test Compatibility (D-01 regression risk: NONE)
+- Verified via cross-AI review: existing tests in `test_f3_cross_plan_invariant.py`
+  assert finding existence and severity (`check_id in ids`, `all HIGH`), NOT finding
+  count. D-01 reduces duplicate findings but does not remove all findings, so all
+  existing assertions continue to hold. New fixtures must test exact count behavior.
 - `seen` set is local to `check()`. Key change is self-contained.
 
 ### ParsedPlan.raw_text
