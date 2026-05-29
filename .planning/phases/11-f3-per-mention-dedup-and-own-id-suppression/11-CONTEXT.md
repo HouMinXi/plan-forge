@@ -27,8 +27,10 @@ file and its tests.
 ### F3-02: Own-ID Extraction from YAML Frontmatter
 
 - **D-03:** Extend `_own_id_set()` to scan the YAML frontmatter block at the top
-  of raw_text. Frontmatter detection: opening `---` must be on line 1 (strip
-  leading BOM/blank before checking; accept line 2 only if line 1 is empty).
+  of raw_text. Frontmatter detection: strip the UTF-8 BOM (codepoint U+FEFF)
+  before the `---` check. In Python: `line.lstrip(chr(0xFEFF)).strip()`.
+  WARNING: `str.strip()` alone does NOT remove U+FEFF. Opening `---` must be
+  on line 1 after BOM/whitespace stripping; accept line 2 only if line 1 is empty.
   The closing `---` must appear before the first `#` heading line -- any `---`
   after a heading is treated as a horizontal rule, not a frontmatter delimiter.
   If opening `---` not found on line 1, skip frontmatter scan entirely.
@@ -140,6 +142,52 @@ file and its tests.
   `.planning/phases/10-f2-structural-false-positive-reduction/10-02-PLAN.md`
   before and after fix; HIGH count should drop from 6 to 1 (one for "Phase 8"
   on first occurrence, none for repeated mentions).
+
+- Reference implementation for `_own_id_set` (verified correct by 4 rounds of
+  cross-AI review -- use this, not the buggy pseudocode in earlier review prompts):
+
+  ```python
+  import re
+  _BOM = chr(0xFEFF)  # U+FEFF, NOT stripped by str.strip()
+
+  def _own_id_set(parsed: ParsedPlan) -> set[str]:
+      own: set[str] = set()
+      lines = parsed.raw_text.splitlines()
+      if not lines:
+          return own
+
+      # Frontmatter scan: opening --- must be on line 1 (or line 2 if line 1 empty)
+      first = lines[0].lstrip(_BOM).strip()
+      second = lines[1].lstrip(_BOM).strip() if len(lines) > 1 else ""
+      fm_start = None
+      if first == "---":
+          fm_start = 1
+      elif first == "" and second == "---":
+          fm_start = 2
+
+      if fm_start is not None:
+          phase_num = plan_num = None
+          for line in lines[fm_start:]:
+              stripped = line.strip()
+              if stripped.startswith("#") or stripped == "---":
+                  break  # closing --- or first heading ends frontmatter
+              if m := re.match(r'phase:\s*["\']?(\d+)', stripped):
+                  phase_num = m.group(1).zfill(2)
+              if m := re.match(r'plan:\s*["\']?(\d+)', stripped):
+                  plan_num = m.group(1).zfill(2)
+          if phase_num and plan_num:
+              own.add(f"{phase_num}-{plan_num}")
+
+      # Heading scan (always runs -- union with frontmatter result)
+      for line in lines:
+          if line.strip().startswith("#"):
+              heading = line.strip().lstrip("#").strip()
+              for m in _SUBPLAN_RE.finditer(heading):
+                  own.add(m.group(0).lower())
+              break  # first heading only
+
+      return own
+  ```
 
 </specifics>
 
