@@ -17,6 +17,18 @@ _CAP_TOKEN_RE = re.compile(r'\b[A-Z][A-Za-z0-9_-]{2,}\b')
 # Max findings emitted per plan
 _FINDING_CAP = 20
 
+# Structural vocabulary repeated by design in every task section of a plan.
+# These words appear in phrases like "Step N: Run ...", "Expected: Pass", etc.
+# and must not be treated as duplicate-fact violations.
+_STRUCTURAL_WORDS: frozenset[str] = frozenset({
+    "step", "run", "expected", "pass", "files",
+    "create", "modify", "append", "commit", "test",
+    "write", "add", "signed-off-by",
+})
+
+# Matches "Signed-off-by: Name <email>" lines (case-insensitive).
+_SIGNOFF_RE = re.compile(r"^\s*signed-off-by\s*:\s*(.*)", re.IGNORECASE)
+
 
 def _extract_ngrams(text: str) -> set[str]:
     """Return set of lowercase bigrams and trigrams of capitalized tokens."""
@@ -62,9 +74,17 @@ def check(parsed: ParsedPlan, **kwargs) -> list[Finding]:
     for heading in parsed.sections:
         heading_words.update(heading.lower().split())
 
+    signoff_words: set[str] = set()
+    for line in parsed.raw_text.splitlines():
+        m = _SIGNOFF_RE.match(line)
+        if m:
+            name = re.sub(r"<[^>]+>", "", m.group(1)).strip()
+            signoff_words.update(t.lower() for t in name.split())
+    exclusion = _STRUCTURAL_WORDS | signoff_words | heading_words
+
     findings: list[Finding] = []
     for ng, headings in flagged[:_FINDING_CAP]:
-        if set(ng.split()) <= heading_words:
+        if set(ng.split()) <= exclusion:
             continue
         findings.append(Finding(
             check_id="F2.duplicate_fact",
