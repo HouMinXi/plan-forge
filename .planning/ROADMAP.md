@@ -11,7 +11,8 @@ tokens that repeat across sections by design in implementation plans.
 
 - **v0.1.0 MVP** - Phases 1-7 (shipped 2026-05-26)
 - **v0.1.1 Precision Fixes** - Phases 8-9 (shipped 2026-05-28)
-- **v0.1.2 F2 Structural FP Reduction** - Phase 10 (planned)
+- **v0.1.2 F2 Structural FP Reduction** - Phase 10 (shipped 2026-05-29)
+- **v0.1.3 F3 False-Positive Reduction** - Phase 11 (planned)
 
 ## Phases
 
@@ -98,15 +99,36 @@ Plans:
 - [x] 10-02-PLAN.md -- F2 union exclusion filter: structural words + signoff tokens + bug-inject
 - [ ] 10-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
+### v0.1.3 F3 False-Positive Reduction
+
+**Milestone Goal:** Eliminate F3.unverified_cross_plan_ref false positives caused
+by per-mention reporting (same reference flagged N times) and self-references
+(a plan flagging its own ID as an unverified cross-plan reference).
+
+#### Phase 11: F3 Per-Mention Dedup and Own-ID Suppression
+
+**Goal**: F3.unverified_cross_plan_ref fires at most once per unique cross-plan
+reference, and never fires on identifiers that are defined within the same plan
+**Depends on**: Phase 10 (v0.1.2 shipped)
+**Requirements**: F3-01, F3-02
+**Success Criteria** (what must be TRUE):
+  1. Running check_mechanical on a GSD PLAN.md that references "Phase 8" six times
+     produces at most one F3 finding for that reference (not six)
+  2. Running check_mechanical on a plan that mentions its own plan ID (e.g. "08-02"
+     appears in 08-02-PLAN.md) produces zero F3 findings for that self-reference
+  3. Genuine cross-plan reference TP fixture still fires (anti-gutting verified)
+**Plans**: TBD
+
 ## Progress
 
-**Execution Order:** 8 -> 9 -> 10
+**Execution Order:** 8 -> 9 -> 10 -> 11
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 8. Source Code Precision Fixes | v0.1.1 | 4/4 | Complete | 2026-05-28 |
 | 9. GSD Format Compatibility | v0.1.1 | 2/2 | Complete | 2026-05-28 |
-| 10. F2 Structural FP Reduction | v0.1.2 | 2/3 | In Progress|  |
+| 10. F2 Structural FP Reduction | v0.1.2 | 3/3 | Complete   | 2026-05-29 |
+| 11. F3 Per-Mention Dedup       | v0.1.3 | 0/? | Not started | - |
 
 ## Traceability
 
@@ -119,5 +141,7 @@ Plans:
 | GATE-05 | Phase 8 | Complete |
 | GSD-01 | Phase 9 | Complete |
 | GSD-02 | Phase 9 | Complete |
-| F2-01 | Phase 10 | Pending |
-| F2-02 | Phase 10 | Pending |
+| F2-01 | Phase 10 | Complete |
+| F2-02 | Phase 10 | Complete |
+| F3-01 | Phase 11 | Pending |
+| F3-02 | Phase 11 | Pending |
