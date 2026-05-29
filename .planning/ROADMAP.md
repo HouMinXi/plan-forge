@@ -1,17 +1,17 @@
-# Roadmap: plan-forge v0.1.1 -- Precision Fixes
+# Roadmap: plan-forge -- Active Development
 
 ## Overview
 
-v0.1.0 shipped 2026-05-26. Self-dogfood revealed three confirmed false-positive
-classes. This milestone makes the two highest-ROI src/ corrections (G8 severity
-downgrade + F2 heading-aware suppression) and fixes the GSD format coupling
-(36 BLOCKER no_section findings) by updating forge templates -- zero LOC in
-plan-forge itself.
+v0.1.0 shipped 2026-05-26. v0.1.1 shipped 2026-05-28 (G8 severity downgrade +
+F2 heading-word suppression + GSD format compatibility). v0.1.2 targets the
+remaining F2 false-positive class: structural template phrases and commit-signature
+tokens that repeat across sections by design in implementation plans.
 
 ## Milestones
 
 - **v0.1.0 MVP** - Phases 1-7 (shipped 2026-05-26)
-- **v0.1.1 Precision Fixes** - Phases 8-9 (in progress)
+- **v0.1.1 Precision Fixes** - Phases 8-9 (shipped 2026-05-28)
+- **v0.1.2 F2 Structural FP Reduction** - Phase 10 (planned)
 
 ## Phases
 
@@ -25,10 +25,8 @@ T33 self-dogfood + T34 SC-3 audit. Full history in plan-forge-v0.1-PLAN.md.
 
 </details>
 
-### v0.1.1 Precision Fixes
-
-**Milestone Goal:** Eliminate the three confirmed false-positive classes from
-v0.1.0 self-dogfood without introducing new gates or architecture changes.
+<details>
+<summary>v0.1.1 Precision Fixes (Phases 8-9) - SHIPPED 2026-05-28</summary>
 
 #### Phase 8: Source Code Precision Fixes
 
@@ -48,10 +46,10 @@ fires on capitalized plan section headings
 **Plans**: 4 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
-- [ ] 08-02-PLAN.md -- G8 severity fix: no_citation BLOCKER -> HIGH for non-empty body
-- [ ] 08-03-PLAN.md -- F2 heading-words suppression guard
-- [ ] 08-04-PLAN.md -- Forge review pipeline + merge + worktree cleanup
+- [x] 08-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
+- [x] 08-02-PLAN.md -- G8 severity fix: no_citation BLOCKER -> HIGH for non-empty body
+- [x] 08-03-PLAN.md -- F2 heading-words suppression guard
+- [x] 08-04-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
 #### Phase 9: GSD Format Compatibility
 
@@ -61,8 +59,7 @@ checked with api.check (was 36)
 **Requirements**: GSD-01, GSD-02
 **Success Criteria** (what must be TRUE):
   1. The documented fix path exists: forge GSD templates updated to embed
-     plan-forge canonical section keywords (e.g. "## Architecture & Reference
-     Class") in the appropriate heading positions
+     plan-forge canonical section keywords in the appropriate heading positions
   2. Running api.check (mechanical-only, llm_clients=[]) on a forge GSD planning
      doc returns 0 G-gate no_section BLOCKERs (down from 36)
 **Plans**: 2 plans
@@ -71,23 +68,51 @@ Plans:
 - [x] 09-01-PLAN.md -- Add G-gate sections to both forge milestone ROADMAP files
 - [x] 09-02-PLAN.md -- Add G-gate sections to 01-CONTEXT.md; fix citation in 03-CONTEXT.md; verify all 5 docs
 
+</details>
+
+### v0.1.2 F2 Structural FP Reduction
+
+**Milestone Goal:** Eliminate F2.duplicate_fact false positives caused by
+structural template phrases and commit-signature tokens in implementation plans.
+
+#### Phase 10: F2 Structural False-Positive Reduction
+
+**Goal**: F2.duplicate_fact no longer fires on structural template phrases
+(step/run/expected/pass) or commit-signature tokens (author names in
+Signed-off-by lines) in implementation plans
+**Depends on**: Phase 9 (v0.1.1 shipped)
+**Requirements**: F2-01, F2-02
+**Success Criteria** (what must be TRUE):
+  1. Running check_mechanical on a plan with structural template phrases
+     (step write, step run, expected pass, etc. repeated across task sections)
+     produces zero F2 LOW findings for those terms
+  2. Running check_mechanical on a plan embedding commit message examples with
+     repeated Signed-off-by lines produces zero F2 LOW findings for author-name
+     phrases (e.g. "minxi hou", "signed-off-by minxi")
+  3. Genuine duplicate-fact TP fixture still fires (anti-gutting verified)
+  4. Bug-inject cycle confirms the guards are load-bearing
+**Plans**: TBD
+
 ## Progress
 
-**Execution Order:** 8 -> 9
+**Execution Order:** 8 -> 9 -> 10
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 8. Source Code Precision Fixes | v0.1.1 | 0/4 | Not started | - |
-| 9. GSD Format Compatibility | v0.1.1 | 2/2 | Complete   | 2026-05-28 |
+| 8. Source Code Precision Fixes | v0.1.1 | 4/4 | Complete | 2026-05-28 |
+| 9. GSD Format Compatibility | v0.1.1 | 2/2 | Complete | 2026-05-28 |
+| 10. F2 Structural FP Reduction | v0.1.2 | 0/? | Not started | - |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GATE-01 | Phase 8 | Pending |
-| GATE-02 | Phase 8 | Pending |
-| GATE-03 | Phase 8 | Pending |
-| GATE-04 | Phase 8 | Pending |
-| GATE-05 | Phase 8 | Pending |
-| GSD-01 | Phase 9 | Pending |
-| GSD-02 | Phase 9 | Pending |
+| GATE-01 | Phase 8 | Complete |
+| GATE-02 | Phase 8 | Complete |
+| GATE-03 | Phase 8 | Complete |
+| GATE-04 | Phase 8 | Complete |
+| GATE-05 | Phase 8 | Complete |
+| GSD-01 | Phase 9 | Complete |
+| GSD-02 | Phase 9 | Complete |
+| F2-01 | Phase 10 | Pending |
+| F2-02 | Phase 10 | Pending |
