@@ -425,7 +425,7 @@ All claims in this research were verified or cited -- no user confirmation neede
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 None. CONTEXT.md provides a complete verified reference implementation and locked
 decisions for every design choice. The planner can proceed directly to plan creation.
