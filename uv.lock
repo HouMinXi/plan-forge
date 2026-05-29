@@ -657,7 +657,7 @@ wheels = [
 
 [[package]]
 name = "plan-forge"
-version = "0.1.0a2"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "alembic" },
