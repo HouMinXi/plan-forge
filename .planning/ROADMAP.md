@@ -94,8 +94,8 @@ Signed-off-by lines) in implementation plans
 **Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
-- [ ] 10-02-PLAN.md -- F2 union exclusion filter: structural words + signoff tokens + bug-inject
+- [x] 10-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
+- [x] 10-02-PLAN.md -- F2 union exclusion filter: structural words + signoff tokens + bug-inject
 - [ ] 10-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
 ## Progress
@@ -106,7 +106,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 8. Source Code Precision Fixes | v0.1.1 | 4/4 | Complete | 2026-05-28 |
 | 9. GSD Format Compatibility | v0.1.1 | 2/2 | Complete | 2026-05-28 |
-| 10. F2 Structural FP Reduction | v0.1.2 | 0/3 | Not started | - |
+| 10. F2 Structural FP Reduction | v0.1.2 | 2/3 | In Progress|  |
 
 ## Traceability
 
