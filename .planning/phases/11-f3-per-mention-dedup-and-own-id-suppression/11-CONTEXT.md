@@ -26,16 +26,25 @@ file and its tests.
 
 ### F3-02: Own-ID Extraction from YAML Frontmatter
 
-- **D-03:** Extend `_own_id_set()` to scan YAML frontmatter (`---...---` block)
-  for `phase:` and `plan:` fields before falling back to the first ATX heading.
-  Extract the leading digit(s) from `phase:` (e.g., "08-source-code-precision-fixes"
-  -> "08") and zero-pad `plan:` to 2 digits. Construct own ID as "{phase}-{plan}"
-  (e.g., "08-02").
-- **D-04:** If frontmatter lacks `phase:` or `plan:` fields, fall back to the
-  existing first-ATX-heading scan. No change in behavior for non-GSD plans.
+- **D-03:** Extend `_own_id_set()` to scan the YAML frontmatter block at the top
+  of raw_text (`---` on line 1, then fields until the closing `---` which must
+  appear before the first `#` heading). Extract `phase:` leading digits and
+  zero-pad `plan:` to 2 digits with `.zfill(2)`. Construct own ID "{phase}-{plan}"
+  (e.g., "08-02"). Both phase number AND plan number MUST be zero-padded --
+  `plan: 2` (unquoted YAML) must yield `"02"` not `"2"` to match `_SUBPLAN_RE`.
+- **D-04:** Frontmatter scan and heading scan are ADDITIVE (union), not exclusive
+  fallback. Even when frontmatter yields an own ID, continue to scan the first
+  ATX heading and add any IDs found there. This prevents silent failure when
+  frontmatter and heading disagree. If frontmatter has no `phase:` or `plan:`
+  fields, it contributes nothing and only the heading result is returned.
 - **D-05:** `_own_id_set` returns `set[str]` of lowercase own-id strings, same
-  contract as today. Adding the frontmatter path does not change the return type
-  or downstream usage (`verified.update(_own_id_set(parsed))`).
+  contract as today. No return type or downstream usage change.
+- **D-08 (known limitation):** `_SUBPLAN_RE = r'(?<!\d-)\b0[1-9]-\d{2}\b'`
+  requires the first digit to be `0`, so Phase 10+ own IDs like `"10-02"` are
+  never matched as claims in the document body. Frontmatter extraction correctly
+  adds `"10-02"` to `verified`, but since `_SUBPLAN_RE` never extracts `"10-02"`
+  as a claim, the suppression has no practical effect for Phase >= 10. Record in
+  code comment; extending `_SUBPLAN_RE` is out of Phase 11 scope.
 
 ### Phase Structure
 
