@@ -148,9 +148,9 @@ detection and own-ID extraction; a plan body that mentions its own phase number
 **Plans**: 3 plans
 
 Plans:
-- [ ] 12-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
-- [ ] 12-02-PLAN.md -- _SUBPLAN_RE extension + phase-text token suppression + bite test
-- [ ] 12-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
+- [x] 12-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
+- [x] 12-02-PLAN.md -- _SUBPLAN_RE extension + phase-text token suppression + bite test
+- [x] 12-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
 ## Progress
 
@@ -162,7 +162,7 @@ Plans:
 | 9. GSD Format Compatibility | v0.1.1 | 2/2 | Complete | 2026-05-28 |
 | 10. F2 Structural FP Reduction | v0.1.2 | 3/3 | Complete | 2026-05-29 |
 | 11. F3 Per-Mention Dedup       | v0.1.3 | 3/3 | Complete | 2026-05-30 |
-| 12. F3 Phase 10+ and Phase-Text | v0.1.4 | 0/3 | In Progress | |
+| 12. F3 Phase 10+ and Phase-Text | v0.1.4 | 3/3 | Complete | 2026-05-31 |
 
 ## Traceability
 
@@ -179,5 +179,5 @@ Plans:
 | F2-02 | Phase 10 | Complete |
 | F3-01 | Phase 11 | Complete |
 | F3-02 | Phase 11 | Complete |
-| F3-03 | Phase 12 | Pending |
-| F3-04 | Phase 12 | Pending |
+| F3-03 | Phase 12 | Complete |
+| F3-04 | Phase 12 | Complete |
