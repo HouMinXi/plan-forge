@@ -137,3 +137,28 @@ def test_f3_cross_ref_still_fires():
     assert own_findings == [], (
         f"Own id '02-01' should remain silent; got: {own_findings}"
     )
+
+
+def test_f3_dedup_fires_once():
+    """Dedup: Phase 8 referenced 6 times must produce exactly 1 F3 finding."""
+    parsed = parse(_load("f3_dedup_fp.md"))
+    findings = f3_cross_plan_invariant.check(parsed)
+    f3_findings = [f for f in findings if f.check_id == "F3.unverified_cross_plan_ref"]
+    phase8_findings = [f for f in f3_findings if "Phase 8" in f.message or "phase 8" in f.message]
+    assert len(phase8_findings) == 1, (
+        f"Expected exactly 1 F3 finding for Phase 8, got {len(phase8_findings)}: "
+        f"{[f.message for f in phase8_findings]}"
+    )
+
+
+def test_f3_own_id_suppressed_via_frontmatter():
+    """Own-ID from YAML frontmatter must suppress self-references."""
+    parsed = parse(_load("f3_own_id_fp.md"))
+    findings = f3_cross_plan_invariant.check(parsed)
+    own_id_findings = [
+        f for f in findings
+        if f.check_id == "F3.unverified_cross_plan_ref" and "08-02" in f.message
+    ]
+    assert own_id_findings == [], (
+        f"Own id 08-02 from frontmatter should be exempt, got: {own_id_findings}"
+    )
