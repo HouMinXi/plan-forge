@@ -21,7 +21,7 @@ from plan_forge.verdict import Finding, Severity
 # (e.g. "05-17" in "2026-05-17").  The lookbehind is fixed-length (2 chars)
 # so Python's re engine accepts it.
 _PHASE_RE = re.compile(r'\bphase[-\s]\d+\b', re.IGNORECASE)
-_SUBPLAN_RE = re.compile(r'(?<!\d-)\b0[1-9]-\d{2}\b')
+_SUBPLAN_RE = re.compile(r'(?<!\d-)\b(?:0[1-9]|[1-9]\d)-\d{2}\b')
 _TASK_RE = re.compile(r'\bT\d{2,3}\b')
 
 # Section headings that constitute verified/exempt sections
@@ -36,10 +36,6 @@ _EXEMPT_KEYWORDS = (
 # U+FEFF BOM is not removed by str.strip(). Files saved by some editors or
 # exported from Windows tools begin with this byte sequence. Strip it before
 # comparing the opening --- delimiter.
-# Note: Phase 10+ IDs (two-digit phase numbers like 10-02) are not matched
-# by _SUBPLAN_RE in document body, so frontmatter extraction adds them to
-# the verified set but suppression has no practical effect on body scanning.
-# Extending the subplan pattern to cover Phase 10+ is deferred.
 _BOM = chr(0xFEFF)
 
 
@@ -87,6 +83,13 @@ def _own_id_set(parsed: ParsedPlan) -> set[str]:
                 phase_num = m.group(1).zfill(2)
             if m := re.match(r'plan:\s*["\']?(\d+)', stripped):
                 plan_num = m.group(1).zfill(2)
+        if phase_num:
+            phase_int = int(phase_num)
+            own.add(f"phase {phase_int}")
+            own.add(f"phase-{phase_int}")
+            own.add(f"phase {phase_num}")
+            own.add(f"phase-{phase_num}")
+
         if phase_num and plan_num:
             own.add(f"{phase_num}-{plan_num}")
 
