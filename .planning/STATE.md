@@ -4,8 +4,8 @@ milestone: v0.1.1
 milestone_name: Precision Fixes
 status: executing
 stopped_at: Phase 9 context gathered
-last_updated: "2026-05-29T17:37:02.533Z"
-last_activity: 2026-05-29 -- Phase 11 planning complete
+last_updated: "2026-05-30T02:30:44.131Z"
+last_activity: 2026-05-30 -- Phase 11 execution started
 progress:
   total_phases: 2
   completed_phases: 1
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-27)
 
 **Core value:** plan-forge signal-to-noise ratio -- eliminate the three confirmed
 false-positive classes from v0.1.0 self-dogfood before any new capability work
-**Current focus:** Phase 10 — f2-structural-false-positive-reduction
+**Current focus:** Phase 11 — f3-per-mention-dedup-and-own-id-suppression
 
 ## Current Position
 
-Phase: 10 (f2-structural-false-positive-reduction) — EXECUTING
+Phase: 11 (f3-per-mention-dedup-and-own-id-suppression) — EXECUTING
 Plan: 1 of 3
-Status: Ready to execute
-Last activity: 2026-05-29 -- Phase 11 planning complete
+Status: Executing Phase 11
+Last activity: 2026-05-30 -- Phase 11 execution started
 
 Progress: [..........] 0%
 
