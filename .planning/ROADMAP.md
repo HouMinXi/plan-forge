@@ -3,16 +3,17 @@
 ## Overview
 
 v0.1.0 shipped 2026-05-26. v0.1.1 shipped 2026-05-28 (G8 severity downgrade +
-F2 heading-word suppression + GSD format compatibility). v0.1.2 targets the
-remaining F2 false-positive class: structural template phrases and commit-signature
-tokens that repeat across sections by design in implementation plans.
+F2 heading-word suppression + GSD format compatibility). v0.1.2 shipped 2026-05-29
+(F2 structural template and commit-signature FP suppression). v0.1.3 shipped
+2026-05-30 (F3 per-claim dedup and frontmatter own-ID suppression).
 
 ## Milestones
 
 - **v0.1.0 MVP** - Phases 1-7 (shipped 2026-05-26)
 - **v0.1.1 Precision Fixes** - Phases 8-9 (shipped 2026-05-28)
 - **v0.1.2 F2 Structural FP Reduction** - Phase 10 (shipped 2026-05-29)
-- **v0.1.3 F3 False-Positive Reduction** - Phase 11 (planned)
+- **v0.1.3 F3 False-Positive Reduction** - Phase 11 (shipped 2026-05-30)
+- **v0.1.4 F3 Phase 10+ and Phase-Text Suppression** - Phase 12 (active)
 
 ## Phases
 
@@ -71,10 +72,8 @@ Plans:
 
 </details>
 
-### v0.1.2 F2 Structural FP Reduction
-
-**Milestone Goal:** Eliminate F2.duplicate_fact false positives caused by
-structural template phrases and commit-signature tokens in implementation plans.
+<details>
+<summary>v0.1.2 F2 Structural FP Reduction (Phase 10) - SHIPPED 2026-05-29</summary>
 
 #### Phase 10: F2 Structural False-Positive Reduction
 
@@ -97,13 +96,12 @@ Signed-off-by lines) in implementation plans
 Plans:
 - [x] 10-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
 - [x] 10-02-PLAN.md -- F2 union exclusion filter: structural words + signoff tokens + bug-inject
-- [ ] 10-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
+- [x] 10-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
-### v0.1.3 F3 False-Positive Reduction
+</details>
 
-**Milestone Goal:** Eliminate F3.unverified_cross_plan_ref false positives caused
-by per-mention reporting (same reference flagged N times) and self-references
-(a plan flagging its own ID as an unverified cross-plan reference).
+<details>
+<summary>v0.1.3 F3 False-Positive Reduction (Phase 11) - SHIPPED 2026-05-30</summary>
 
 #### Phase 11: F3 Per-Mention Dedup and Own-ID Suppression
 
@@ -122,18 +120,49 @@ reference, and never fires on identifiers that are defined within the same plan
 Plans:
 - [x] 11-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
 - [x] 11-02-PLAN.md -- F3 dedup key fix + frontmatter own-ID extension + bite test
-- [ ] 11-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
+- [x] 11-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
+
+</details>
+
+### v0.1.4 F3 Phase 10+ and Phase-Text Suppression
+
+**Milestone Goal:** Extend F3 false-positive suppression to cover two deferred
+cases from Phase 11: Phase 10+ plan IDs not matched by _SUBPLAN_RE, and "Phase N"
+self-references in a plan that describes its own phase.
+
+#### Phase 12: F3 Phase 10+ Subplan ID and Phase-Text Self-Reference
+
+**Goal**: _SUBPLAN_RE recognizes Phase 10+ IDs (10-XX through 99-XX) in both claim
+detection and own-ID extraction; a plan body that mentions its own phase number
+("Phase 8" in a Phase 8 plan) produces zero F3 findings for that mention
+**Depends on**: Phase 11 (v0.1.3 shipped)
+**Requirements**: F3-03, F3-04
+**Success Criteria** (what must be TRUE):
+  1. Running check_mechanical on a plan with phase:10 and plan:2 in frontmatter
+     that references "10-02" in its body produces zero F3 findings for "10-02"
+  2. Running check_mechanical on a plan with phase:8 in frontmatter that contains
+     "Phase 8" and "Phase-8" in its body produces zero F3 findings for those phrases
+  3. A plan referencing a DIFFERENT phase number (e.g. "Phase 9" in a Phase 8 plan
+     with no Phase 9 audit note) still fires F3 (anti-gutting verified)
+  4. Bug-inject cycle confirms both guards are load-bearing
+**Plans**: 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md -- Worktree setup + fixture scaffolding + failing test stubs (RED)
+- [ ] 12-02-PLAN.md -- _SUBPLAN_RE extension + phase-text token suppression + bite test
+- [ ] 12-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
 ## Progress
 
-**Execution Order:** 8 -> 9 -> 10 -> 11
+**Execution Order:** 8 -> 9 -> 10 -> 11 -> 12
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 8. Source Code Precision Fixes | v0.1.1 | 4/4 | Complete | 2026-05-28 |
 | 9. GSD Format Compatibility | v0.1.1 | 2/2 | Complete | 2026-05-28 |
-| 10. F2 Structural FP Reduction | v0.1.2 | 3/3 | Complete   | 2026-05-29 |
-| 11. F3 Per-Mention Dedup       | v0.1.3 | 2/3 | In Progress|  |
+| 10. F2 Structural FP Reduction | v0.1.2 | 3/3 | Complete | 2026-05-29 |
+| 11. F3 Per-Mention Dedup       | v0.1.3 | 3/3 | Complete | 2026-05-30 |
+| 12. F3 Phase 10+ and Phase-Text | v0.1.4 | 0/3 | In Progress | |
 
 ## Traceability
 
@@ -148,5 +177,7 @@ Plans:
 | GSD-02 | Phase 9 | Complete |
 | F2-01 | Phase 10 | Complete |
 | F2-02 | Phase 10 | Complete |
-| F3-01 | Phase 11 | Pending |
-| F3-02 | Phase 11 | Pending |
+| F3-01 | Phase 11 | Complete |
+| F3-02 | Phase 11 | Complete |
+| F3-03 | Phase 12 | Pending |
+| F3-04 | Phase 12 | Pending |
