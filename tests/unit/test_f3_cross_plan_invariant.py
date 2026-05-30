@@ -162,3 +162,50 @@ def test_f3_own_id_suppressed_via_frontmatter():
     assert own_id_findings == [], (
         f"Own id 08-02 from frontmatter should be exempt, got: {own_id_findings}"
     )
+
+def test_f3_phase10_cross_ref_detected():
+    """Phase 10+ subplan ID (10-02) in body must fire one F3 HIGH finding."""
+    parsed = parse(_load("f3_phase10_cross_ref.md"))
+    findings = f3_cross_plan_invariant.check(parsed)
+    assert len(findings) == 1, (
+        f"Expected 1 finding for 10-02, got {len(findings)}: {findings}"
+    )
+    assert "10-02" in findings[0].message, (
+        f"Finding message should mention '10-02', got: {findings[0].message}"
+    )
+
+
+def test_f3_phase10_own_id_suppressed():
+    """Phase 10 own-ID (10-02 from frontmatter) must suppress self-references."""
+    parsed = parse(_load("f3_phase10_own_id_fp.md"))
+    findings = f3_cross_plan_invariant.check(parsed)
+    assert findings == [], (
+        f"Own id '10-02' from frontmatter should be exempt, got: {findings}"
+    )
+
+
+def test_f3_phase_text_self_ref_suppressed():
+    """Phase-text self-reference must not fire F3; different phase must fire.
+
+    A plan with phase:8 frontmatter mentioning 'Phase 8' and 'Phase-8'
+    must produce zero F3 findings for those phrases. A mention of 'Phase 9'
+    (different phase, no audit note) must still produce one F3 finding.
+    """
+    parsed = parse(_load("f3_phase_text_fp.md"))
+    findings = f3_cross_plan_invariant.check(parsed)
+    f3_findings = [
+        f for f in findings
+        if f.check_id == "F3.unverified_cross_plan_ref"
+    ]
+    assert len(f3_findings) == 1, (
+        f"Expected exactly 1 F3 finding (Phase 9 only), got {len(f3_findings)}: "
+        f"{[f.message for f in f3_findings]}"
+    )
+    assert any("Phase 9" in f.message for f in f3_findings), (
+        f"Remaining finding should mention 'Phase 9', got: "
+        f"{[f.message for f in f3_findings]}"
+    )
+    assert all("Phase 8" not in f.message for f in f3_findings), (
+        f"'Phase 8' should be suppressed as own-phase self-reference, got: "
+        f"{[f.message for f in f3_findings]}"
+    )
