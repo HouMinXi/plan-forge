@@ -663,18 +663,21 @@ ASVS V5: path values from `<read_first>` blocks go only to `Path.exists()` --
 no shell execution, no writes. The glob guard (D-18b) on `*`, `{`, `}` prevents
 regex amplification from pathological paths.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **F10 stopword list tuning**
-   - Domain terms like "plan", "phase", "task" may need adding after Wave 2 bite
-     test shows FP rate.
+1. **F10 stopword list tuning** -- RESOLVED: POST-IMPLEMENTATION TUNING
+   - Domain terms may need adding after Wave 2 bite test shows FP rate. This is
+     expected tuning, not a blocker for implementation. Deferred to post-GREEN.
 
-2. **test_check_id_prefix_invariant scope**
-   - May have a hardcoded list of F-gate prefixes needing update for F10-F15.
-   - Plan 13-01 Wave 1 must include a task to read and update it.
+2. **test_check_id_prefix_invariant scope** -- RESOLVED: NO ACTION NEEDED
+   - Evidence from 13-01 interface block: `test_check_id_prefix_invariant` only
+     checks that vision-prefixed IDs (G1./G2./G3./G5./G7.) are not emitted by
+     wrong gate files. It does NOT enumerate F-gate prefixes. F10-F15 require
+     no update. No task needed in Plan 13-01.
 
-3. **F11 installed-package silence**
-   - Return `[]` silently when `_TESTS_DIR.exists()` is False. Document in gate.
+3. **F11 installed-package silence** -- RESOLVED: SPECIFIED IN IMPLEMENTATION
+   - Both F11 and F15 guard with `if not _TESTS_DIR.exists(): return []`.
+     Documented in the implementation action block (D-24).
 
 ## Assumptions Log
 
