@@ -167,7 +167,12 @@ traceability, temporal anchor lint, and duplicate-fact cross-section detection
 enhanced with noun-phrase precision.
 **Depends on**: Phase 12 (v0.1.4 shipped)
 **Requirements**: PG-01, PG-02, PG-03
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 13-01-PLAN.md -- Worktree + 12 fixtures + 6 gate stubs + RED test suite
+- [ ] 13-02-PLAN.md -- Implement F10-F15 gates + register in __init__.py + GREEN + bite tests
+- [ ] 13-03-PLAN.md -- Forge review + version bump 0.1.5 + merge + cleanup
 
 ## Progress
 
@@ -180,6 +185,7 @@ enhanced with noun-phrase precision.
 | 10. F2 Structural FP Reduction | v0.1.2 | 3/3 | Complete | 2026-05-29 |
 | 11. F3 Per-Mention Dedup       | v0.1.3 | 3/3 | Complete | 2026-05-30 |
 | 12. F3 Phase 10+ and Phase-Text | v0.1.4 | 3/3 | Complete | 2026-05-31 |
+| 13. Plan-Gate Mechanical Checks  | v0.1.5 | 3/3 | Complete | 2026-05-31 |
 
 ## Traceability
 
@@ -198,3 +204,10 @@ enhanced with noun-phrase precision.
 | F3-02 | Phase 11 | Complete |
 | F3-03 | Phase 12 | Complete |
 | F3-04 | Phase 12 | Complete |
+| PG-01 | Phase 13 | Complete |
+| PG-02 | Phase 13 | Complete |
+| PG-03 | Phase 13 | Complete |
+| F3-04 | Phase 12 | Complete |
+| PG-01 | Phase 13 | Planned |
+| PG-02 | Phase 13 | Planned |
+| PG-03 | Phase 13 | Planned |
