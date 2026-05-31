@@ -113,8 +113,21 @@ tests/fixtures.
 
 - **D-21:** Only `src/plan_forge/checks/mechanical/` (6 new files) + tests +
   fixtures. No parser, verdict, or API changes.
-- **D-22:** Gate registry auto-discovery already in place (files matching
-  `f[0-9]+_*.py`). No changes to `check_mechanical()` entry point needed.
+- **D-22 (CORRECTED by RESEARCH):** Gate registry is NOT auto-discovery.
+  `checks/mechanical/__init__.py` uses explicit `from . import fNN_name` and
+  `findings.extend(fNN_name.check(parsed))` for every gate. Six new import
+  lines + six new extend calls in `__init__.py` are REQUIRED. Plan 13-02
+  must include an explicit task to edit `__init__.py`.
+
+- **D-23 (from RESEARCH):** ParsedPlan has NO `frontmatter` field. F15's
+  `files_modified` guard must parse YAML frontmatter from `parsed.raw_text`
+  directly, following the same `re.match(r'phase:\s*', stripped)` pattern
+  used in F3's `_own_id_set()`. The code_context block is updated accordingly.
+
+- **D-24 (from RESEARCH):** Repo root for F11/F15 = `Path(__file__).parents[4]`
+  (5 parent() calls from `src/plan_forge/checks/mechanical/fNN.py`). Both gates
+  must check `tests_dir.exists()` before grepping and return `[]` if absent
+  (installed-package environments without a tests/ tree).
 
 </decisions>
 
