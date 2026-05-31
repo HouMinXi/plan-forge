@@ -152,6 +152,23 @@ Plans:
 - [x] 12-02-PLAN.md -- _SUBPLAN_RE extension + phase-text token suppression + bite test
 - [x] 12-03-PLAN.md -- Forge review pipeline + merge + worktree cleanup
 
+
+### v0.1.5 Plan Quality Gate (Mechanical Checks)
+
+**Milestone Goal:** Add plan-gate mechanical checks that catch writing-quality
+false positives before AI panel review — absorbing ~70% of LOW/INFO findings.
+Based on empirical corpus of 50+ cross-AI plan review rounds.
+
+#### Phase 13: Plan-Gate Mechanical Checks
+
+**Goal**: Implement plan-gate mechanical checks as new F-gates in plan-forge.
+Target the highest-ROI patterns from the forge v1+v2 corpus: SC-test
+traceability, temporal anchor lint, and duplicate-fact cross-section detection
+enhanced with noun-phrase precision.
+**Depends on**: Phase 12 (v0.1.4 shipped)
+**Requirements**: PG-01, PG-02, PG-03
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:** 8 -> 9 -> 10 -> 11 -> 12
