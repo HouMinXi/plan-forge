@@ -90,9 +90,9 @@ def test_api_mechanical_on_pass_well_formed():
     )
 
     # Snapshot: total finding count
-    assert len(result.findings) == 22, (
+    assert len(result.findings) == 32, (
         f"{fixture}: finding count snapshot mismatch "
-        f"(got {len(result.findings)}, expected 22). "
+        f"(got {len(result.findings)}, expected 32). "
         "Update snapshot if a check was added or removed."
     )
 
@@ -100,6 +100,7 @@ def test_api_mechanical_on_pass_well_formed():
     expected_counts = {
         "F2.duplicate_fact": 20,
         "F3.unverified_cross_plan_ref": 1,
+        "F10.noun_phrase_duplicate": 10,
         "P1.orphan_identifier": 1,
     }
     actual_counts = _check_id_counts(result.findings)
@@ -147,9 +148,9 @@ def test_api_mechanical_on_fail_missing_premortem():
     )
 
     # Snapshot: total finding count
-    assert len(result.findings) == 22, (
+    assert len(result.findings) == 32, (
         f"{fixture}: finding count snapshot mismatch "
-        f"(got {len(result.findings)}, expected 22). "
+        f"(got {len(result.findings)}, expected 32). "
         "Update snapshot if a check was added or removed."
     )
 
@@ -157,6 +158,7 @@ def test_api_mechanical_on_fail_missing_premortem():
     expected_counts = {
         "F2.duplicate_fact": 20,
         "F3.unverified_cross_plan_ref": 1,
+        "F10.noun_phrase_duplicate": 10,
         "P1.orphan_identifier": 1,
     }
     actual_counts = _check_id_counts(result.findings)
@@ -204,15 +206,16 @@ def test_api_mechanical_on_fail_no_g9_anchor():
     )
 
     # Snapshot: total finding count
-    assert len(result.findings) == 20, (
+    assert len(result.findings) == 30, (
         f"{fixture}: finding count snapshot mismatch "
-        f"(got {len(result.findings)}, expected 20). "
+        f"(got {len(result.findings)}, expected 30). "
         "Update snapshot if a check was added or removed."
     )
 
     # Snapshot: per-check_id distribution
     expected_counts = {
         "F2.duplicate_fact": 20,
+        "F10.noun_phrase_duplicate": 10,
     }
     actual_counts = _check_id_counts(result.findings)
     assert actual_counts == expected_counts, (
