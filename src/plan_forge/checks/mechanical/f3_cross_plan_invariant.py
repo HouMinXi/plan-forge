@@ -20,6 +20,10 @@ from plan_forge.verdict import Finding, Severity
 # The _SUBPLAN_RE includes (?<!\d-) to reject fragments inside ISO dates
 # (e.g. "05-17" in "2026-05-17").  The lookbehind is fixed-length (2 chars)
 # so Python's re engine accepts it.
+#
+# Package-internal shared API: _PHASE_RE, _SUBPLAN_RE, _TASK_RE,
+# _heading_is_exempt, and _own_id_set are imported by f13_cross_plan_claim_verifier.
+# Rename or remove them only with a coordinated update to f13.
 _PHASE_RE = re.compile(r'\bphase[-\s]\d+\b', re.IGNORECASE)
 _SUBPLAN_RE = re.compile(r'(?<!\d-)\b(?:0[1-9]|[1-9]\d)-\d{2}\b')
 _TASK_RE = re.compile(r'\bT\d{2,3}\b')

@@ -35,7 +35,17 @@ def _extract_files_modified(raw_text: str) -> set[str]:
         if stripped == '---':
             break
         if stripped.startswith('files_modified:'):
-            collecting = True
+            # Handle inline list: files_modified: [path1, path2]
+            after_colon = stripped[len('files_modified:'):].strip()
+            if after_colon.startswith('[') and after_colon.endswith(']'):
+                inner = after_colon[1:-1]
+                for item in inner.split(','):
+                    item = item.strip().strip('"\'')
+                    if item:
+                        result.add(item)
+                collecting = False
+            else:
+                collecting = True
             continue
         if collecting:
             m = re.match(r'^\s{2,}-\s+(.+)', line)

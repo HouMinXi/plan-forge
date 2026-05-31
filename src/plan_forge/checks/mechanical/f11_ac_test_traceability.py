@@ -16,9 +16,9 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 _TESTS_DIR = _REPO_ROOT / "tests"
 
 _AC_RE = re.compile(r'<acceptance_criteria>(.*?)</acceptance_criteria>', re.DOTALL)
-_TEST_FUNC_RE = re.compile(r'\btest_[a-z_]{4,}\b')
-_PYTEST_COLON_RE = re.compile(r'::(test_[a-z_]{4,})\b')
-_PYTEST_K_RE = re.compile(r'-k\s+(test_[a-z_]{4,})\b')
+_TEST_FUNC_RE = re.compile(r'\btest_[a-z0-9_]{4,}\b')
+_PYTEST_COLON_RE = re.compile(r'::(test_[a-z0-9_]{4,})\b')
+_PYTEST_K_RE = re.compile(r'-k\s+(test_[a-z0-9_]{4,})\b')
 
 
 def _test_function_exists(func_name: str, tests_dir: Path) -> bool:
